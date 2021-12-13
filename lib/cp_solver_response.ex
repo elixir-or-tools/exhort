@@ -1,3 +1,3 @@
 defmodule CpSolverResponse do
-  defstruct [:res]
+  defstruct [:res, :builder]
 end

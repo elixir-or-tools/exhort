@@ -1,10 +1,6 @@
 defmodule CpModelBuilderTest do
   use ExUnit.Case
 
-  test "concatenates a string" do
-    assert "Saying: hi" == CpModelBuilder.print("hi")
-  end
-
   test "builder" do
     assert CpModelBuilder.new()
   end
@@ -53,5 +49,25 @@ defmodule CpModelBuilderTest do
     assert 1 == CpModelBuilder.solution_integer_value(response, x)
     assert 0 == CpModelBuilder.solution_integer_value(response, y)
     assert 0 == CpModelBuilder.solution_integer_value(response, z)
+  end
+
+  test "simple sat program with DSL" do
+    # Pure functions, pure Elixir
+    builder =
+      CpModelBuilder.new_builder()
+      |> CpModelBuilder.new_int_var(:x, {0, 2})
+      |> CpModelBuilder.new_int_var(:y, {0, 2})
+      |> CpModelBuilder.new_int_var(:z, {0, 2})
+      |> CpModelBuilder.require(:!=, :x, :y)
+
+    # Interacting with the underlying CP Model
+    response =
+      builder
+      |> CpModelBuilder.build()
+      |> CpModelBuilder.solve()
+
+    assert 1 == CpModelBuilder.int_val(response, :x)
+    assert 0 == CpModelBuilder.int_val(response, :y)
+    assert 0 == CpModelBuilder.int_val(response, :z)
   end
 end
