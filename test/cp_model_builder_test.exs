@@ -10,6 +10,19 @@ defmodule CpModelBuilderTest do
     assert CpModelBuilder.new_int_var(cp_model_builder, 0, 2, "x")
   end
 
+  test "new bool var" do
+    {:ok, cp_model_builder} = CpModelBuilder.new()
+    assert CpModelBuilder.new_bool_var(cp_model_builder, "x")
+  end
+
+  test "equal" do
+    {:ok, cp_model_builder} = CpModelBuilder.new()
+
+    x = CpModelBuilder.new_int_var(cp_model_builder, 0, 2, "x")
+    y = CpModelBuilder.new_int_var(cp_model_builder, 0, 2, "y")
+    assert CpModelBuilder.add_equal(cp_model_builder, x, y)
+  end
+
   test "not equal" do
     {:ok, cp_model_builder} = CpModelBuilder.new()
 
@@ -55,9 +68,9 @@ defmodule CpModelBuilderTest do
     # Pure functions, pure Elixir
     builder =
       CpModelBuilder.new_builder()
-      |> CpModelBuilder.new_int_var(:x, {0, 2})
-      |> CpModelBuilder.new_int_var(:y, {0, 2})
-      |> CpModelBuilder.new_int_var(:z, {0, 2})
+      |> CpModelBuilder.def_int_var(:x, {0, 2})
+      |> CpModelBuilder.def_int_var(:y, {0, 2})
+      |> CpModelBuilder.def_int_var(:z, {0, 2})
       |> CpModelBuilder.require(:!=, :x, :y)
 
     # Interacting with the underlying CP Model
@@ -69,5 +82,23 @@ defmodule CpModelBuilderTest do
     assert 1 == CpModelBuilder.int_val(response, :x)
     assert 0 == CpModelBuilder.int_val(response, :y)
     assert 0 == CpModelBuilder.int_val(response, :z)
+  end
+
+  test "simple bool DSL" do
+    # Pure functions, pure Elixir
+    builder =
+      CpModelBuilder.new_builder()
+      |> CpModelBuilder.def_bool_var(:x)
+      |> CpModelBuilder.def_bool_var(:y)
+      |> CpModelBuilder.require(:!=, :x, :y)
+
+    # Interacting with the underlying CP Model
+    response =
+      builder
+      |> CpModelBuilder.build()
+      |> CpModelBuilder.solve()
+
+    assert CpModelBuilder.bool_val(response, :x)
+    refute CpModelBuilder.bool_val(response, :y)
   end
 end

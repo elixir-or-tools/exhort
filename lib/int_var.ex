@@ -1,3 +1,3 @@
 defmodule IntVar do
-  defstruct [:res]
+  defstruct [:res, :name, :domain]
 end
