@@ -1,10 +1,11 @@
 defmodule LinearExpression do
-  @on_load :load_nifs
-
   defstruct res: nil, expr: []
 
-  def load_nifs do
-    :erlang.load_nif('priv/lib/linear_expression', 0)
+  def resolve(%LinearExpression{expr: {:sum, atom1, atom2}} = expr, vars) do
+    var1 = Map.get(vars, atom1)
+    var2 = Map.get(vars, atom2)
+    expr_res = Nif.sum_nif(var1.res, var2.res)
+    %LinearExpression{expr | res: expr_res}
   end
 
   def sum(atom1, atom2) do
@@ -13,8 +14,5 @@ defmodule LinearExpression do
 
   def constant(int) do
     %LinearExpression{expr: {:constant, int}}
-  end
-
-  def sum_nif(_var1, _var2) do
   end
 end

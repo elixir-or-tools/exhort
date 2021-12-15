@@ -20,6 +20,7 @@ defmodule CpModelBuilderTest do
 
     x = CpModelBuilder.new_int_var(cp_model_builder, 0, 2, "x")
     y = CpModelBuilder.new_int_var(cp_model_builder, 0, 2, "y")
+
     assert CpModelBuilder.add_equal(cp_model_builder, x, y)
   end
 
@@ -102,7 +103,7 @@ defmodule CpModelBuilderTest do
     refute CpModelBuilder.bool_val(response, :y)
   end
 
-  test "channeling sample problem" do
+  test "channeling sample problem with a tweak" do
     # Create the CP-SAT model.
     builder =
       CpModelBuilder.new_builder()
@@ -114,19 +115,13 @@ defmodule CpModelBuilderTest do
       |> CpModelBuilder.require(:==, LinearExpression.sum(:x, :y), 10, if: :b)
       |> CpModelBuilder.require(:==, :y, 0, unless: :b)
 
-    # |> CpModelBuilder.decide_by(
-    #   [:x],
-    #   DecisionStrategy.choose_first(),
-    #   DecisionStrategy.select_min_value()
-    # )
-
     response =
       builder
       |> CpModelBuilder.build()
       |> CpModelBuilder.solve()
 
-    assert CpModelBuilder.int_val(response, :x)
-    refute CpModelBuilder.int_val(response, :y)
-    refute CpModelBuilder.bool_val(response, :b)
+    assert 10 == CpModelBuilder.int_val(response, :x)
+    assert 0 == CpModelBuilder.int_val(response, :y)
+    assert false == CpModelBuilder.bool_val(response, :b)
   end
 end

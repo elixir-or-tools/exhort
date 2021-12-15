@@ -26,3 +26,5 @@ elix_or-*.tar
 /tmp/
 
 /priv/lib
+
+/c_src/samples

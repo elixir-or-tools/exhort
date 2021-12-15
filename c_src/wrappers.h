@@ -1,3 +1,6 @@
+#ifndef __WRAPPERS_H__
+#define __WRAPPERS_H__
+
 #include "ortools/sat/cp_model.h"
 
 // Wrap each underlying model so the underlying model may be allocated
@@ -43,3 +46,5 @@ extern "C"
     LinearExpr *p;
   } LinearExprWrapper;
 }
+
+#endif
