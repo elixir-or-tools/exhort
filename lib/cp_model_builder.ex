@@ -59,14 +59,32 @@ defmodule CpModelBuilder do
       {:==, atom1, atom2} ->
         add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
 
+      {:==, %LinearExpression{expr: {:sum, atom1, atom2}} = expr, int3, :if, bool4} ->
+        var1 = Map.get(vars, atom1)
+        var2 = Map.get(vars, atom2)
+        expr_res = sum_nif(var1.res, var2.res)
+        expr = %LinearExpression{expr | res: expr_res}
+        constraint = add_equal(builder, expr, int3)
+        var4 = Map.get(vars, bool4)
+        only_enforce_if(constraint, var4)
+        constraint
+
       {:==, atom1, atom2, :if, bool} ->
         constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
         only_enforce_if(constraint, bool)
         constraint
 
-      {:==, atom1, atom2, :unless, bool} ->
-        constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, bool_not(bool))
+      {:==, atom1, atom2, :unless, bool3} when is_atom(atom1) and is_atom(atom2) ->
+        var1 = Map.get(vars, atom1)
+        var2 = Map.get(vars, atom2)
+        constraint = add_equal(builder, var1, var2)
+        only_enforce_if(constraint, bool_not(Map.get(vars, bool3)))
+        constraint
+
+      {:==, atom1, int2, :unless, bool3} when is_atom(atom1) and is_integer(int2) ->
+        var1 = Map.get(vars, atom1) |> IO.inspect(label: "### 1", printable_limit: :infinity)
+        constraint = add_equal(builder, var1, int2)
+        only_enforce_if(constraint, bool_not(Map.get(vars, bool3)))
         constraint
 
       {:!=, atom1, atom2} ->
@@ -80,6 +98,20 @@ defmodule CpModelBuilder do
       {:!=, atom1, atom2, :unless, bool} ->
         constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
         only_enforce_if(constraint, bool_not(bool))
+        constraint
+
+      {:>=, atom1, int2, :if, bool3} ->
+        var1 = Map.get(vars, atom1)
+        var3 = Map.get(vars, bool3)
+        constraint = add_greater_or_equal(builder, var1, int2)
+        only_enforce_if(constraint, var3)
+        constraint
+
+      {:<=, atom1, int2, :unless, bool3} ->
+        var1 = Map.get(vars, atom1)
+        var3 = Map.get(vars, bool3)
+        constraint = add_less_or_equal(builder, var1, int2)
+        only_enforce_if(constraint, bool_not(var3))
         constraint
     end)
 
@@ -116,12 +148,20 @@ defmodule CpModelBuilder do
     %IntVar{res: res, name: String.to_atom(name), domain: {upper_bound, lower_bound}}
   end
 
+  def add_equal(cp_model_builder, %LinearExpression{} = expr1, constant2) do
+    add_equal_expr_nif(cp_model_builder.res, expr1.res, constant2)
+  end
+
   def add_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
     add_equal_bool_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
   def add_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
     add_equal_int_nif(cp_model_builder.res, var1.res, var2.res)
+  end
+
+  def add_equal(cp_model_builder, %IntVar{} = var1, int2) do
+    add_equal_int_constant_nif(cp_model_builder.res, var1.res, int2)
   end
 
   def add_not_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
@@ -132,12 +172,20 @@ defmodule CpModelBuilder do
     add_not_equal_int_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
+  def add_greater_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
+    add_greater_or_equal_nif(cp_model_builder.res, var1.res, int2)
+  end
+
+  def add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
+    add_greater_or_equal_nif(cp_model_builder.res, var1.res, int2)
+  end
+
   def only_enforce_if(constraint, %BoolVar{} = var) do
-    only_enforce_if_nif(constraint.res, var.res)
+    only_enforce_if_nif(constraint, var.res)
   end
 
   def bool_not(%BoolVar{} = var) do
-    bool_not_nif(var.res)
+    %BoolVar{var | res: bool_not_nif(var.res)}
   end
 
   def solve(cp_model_builder) do
@@ -159,6 +207,9 @@ defmodule CpModelBuilder do
   def new_int_var_nif(_cp_model_builder, _upper_bound, _lower_bound, _name) do
   end
 
+  def add_equal_expr_nif(_cp_model_builder, _var1, _var2) do
+  end
+
   def add_equal_bool_nif(_cp_model_builder, _var1, _var2) do
   end
 
@@ -168,7 +219,16 @@ defmodule CpModelBuilder do
   def add_equal_int_nif(_cp_model_builder, _var1, _var2) do
   end
 
+  def add_equal_int_constant_nif(_cp_model_builder, _var1, _var2) do
+  end
+
   def add_not_equal_int_nif(_cp_model_builder, _var1, _var2) do
+  end
+
+  def add_greater_or_equal_nif(_cp_model_builder, _var1, _var2) do
+  end
+
+  def add_less_or_equal_nif(_cp_model_builder, _var1, _var2) do
   end
 
   def only_enforce_if_nif(_constraint, _var) do
@@ -184,8 +244,9 @@ defmodule CpModelBuilder do
   end
 
   def solution_bool_value_nif(_cp_model_builder, _var) do
+    true
   end
 
-  def print(_text) do
+  def sum_nif(_var1, _var2) do
   end
 end

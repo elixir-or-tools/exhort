@@ -2,6 +2,7 @@
 // #include <string.h>
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
+#include "wrappers.h"
 
 using operations_research::Domain;
 using operations_research::sat::BoolVar;
@@ -9,41 +10,16 @@ using operations_research::sat::Constraint;
 using operations_research::sat::CpModelBuilder;
 using operations_research::sat::CpSolverResponse;
 using operations_research::sat::IntVar;
+using operations_research::sat::LinearExpr;
 
 extern "C"
 {
-  // Wrap each underlying model so the underlying model may be allocated
-  // using its class constructor. Each underlying model is referenced
-  // through the wrapper's `p` member.
-  typedef struct
-  {
-    CpModelBuilder *p;
-  } BuilderWrapper;
   ErlNifResourceType *CP_MODEL_BUILDER_WRAPPER;
-
-  typedef struct
-  {
-    BoolVar *p;
-  } BoolVarWrapper;
   ErlNifResourceType *BOOL_VAR_WRAPPER;
-
-  typedef struct
-  {
-    IntVar *p;
-  } IntVarWrapper;
   ErlNifResourceType *INT_VAR_WRAPPER;
-
-  typedef struct
-  {
-    Constraint *p;
-  } ConstraintWrapper;
   ErlNifResourceType *CONSTRAINT_WRAPPER;
-
-  typedef struct
-  {
-    CpSolverResponse *p;
-  } CpSolverResponseWrapper;
   ErlNifResourceType *CP_SOLVER_RESPONSE_WRAPPER;
+  ErlNifResourceType *LINEAR_EXPR_WRAPPER;
 
   ERL_NIF_TERM atom_ok;
 
@@ -77,9 +53,17 @@ extern "C"
     delete w->p;
   }
 
+  void free_linear_expr(ErlNifEnv *env, void *obj)
+  {
+    LinearExprWrapper *w = (LinearExprWrapper *)obj;
+    delete w->p;
+  }
+
   static int init_types(ErlNifEnv *env)
   {
     CP_MODEL_BUILDER_WRAPPER = enif_open_resource_type(env, NULL, "CpModelBuilderWrapper", free_cp_model_builder, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
+
+    LINEAR_EXPR_WRAPPER = enif_open_resource_type(env, NULL, "LinearExprWrapper", free_linear_expr, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
     BOOL_VAR_WRAPPER = enif_open_resource_type(env, NULL, "BoolVarWrapper", free_bool_var, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
@@ -88,6 +72,8 @@ extern "C"
     CONSTRAINT_WRAPPER = enif_open_resource_type(env, NULL, "ConstraintWrapper", free_constraint, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
     CP_SOLVER_RESPONSE_WRAPPER = enif_open_resource_type(env, NULL, "CpSolverResponse", free_solver_response, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
+
+    LINEAR_EXPR_WRAPPER = enif_open_resource_type(env, NULL, "LinearExprWrapper", free_linear_expr, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
     atom_ok = enif_make_atom(env, "ok");
 
@@ -171,6 +157,42 @@ extern "C"
     return term;
   }
 
+  static ERL_NIF_TERM add_equal_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    LinearExprWrapper *expr1;
+    long constant2;
+    ERL_NIF_TERM term;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_resource(env, argv[1], LINEAR_EXPR_WRAPPER, (void **)&expr1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int64(env, argv[2], &constant2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddEquality(*expr1->p, constant2);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(INT_VAR_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
   static ERL_NIF_TERM add_equal_int_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
@@ -194,6 +216,42 @@ extern "C"
     }
 
     Constraint constraint = builder_wrapper->p->AddEquality(*var1->p, *var2->p);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(INT_VAR_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  static ERL_NIF_TERM add_equal_int_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    IntVarWrapper *var1;
+    long constant2;
+    ERL_NIF_TERM term;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_resource(env, argv[1], INT_VAR_WRAPPER, (void **)&var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int64(env, argv[2], &constant2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddEquality(*var1->p, constant2);
 
     ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(INT_VAR_WRAPPER, sizeof(ConstraintWrapper));
     if (constraint_wrapper == NULL)
@@ -303,7 +361,79 @@ extern "C"
 
     Constraint constraint = builder_wrapper->p->AddNotEqual(*var1->p, *var2->p);
 
-    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(INT_VAR_WRAPPER, sizeof(ConstraintWrapper));
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  static ERL_NIF_TERM add_greater_or_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    IntVarWrapper *var1;
+    long constant2;
+    ERL_NIF_TERM term;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_resource(env, argv[1], INT_VAR_WRAPPER, (void **)&var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int64(env, argv[2], &constant2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddGreaterOrEqual(*var1->p, constant2);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  static ERL_NIF_TERM add_less_or_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    IntVarWrapper *var1;
+    long constant2;
+    ERL_NIF_TERM term;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_resource(env, argv[1], INT_VAR_WRAPPER, (void **)&var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int64(env, argv[2], &constant2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddLessOrEqual(*var1->p, constant2);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
     if (constraint_wrapper == NULL)
       return enif_make_badarg(env);
 
@@ -390,7 +520,6 @@ extern "C"
     }
 
     bool value = SolutionBooleanValue(*response->p, *var->p);
-    // fprintf(stderr, "%s = %d\n", var->p->Name().c_str(), SolutionBooleanValue(*response->p, *var->p));
 
     return enif_make_int(env, value);
   }
@@ -415,18 +544,54 @@ extern "C"
     return enif_make_int64(env, value);
   }
 
+  static ERL_NIF_TERM sum_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    IntVarWrapper *var1;
+    IntVarWrapper *var2;
+    ERL_NIF_TERM term;
+
+    fprintf(stderr, "about to grab vars\n");
+
+    if (!enif_get_resource(env, argv[0], INT_VAR_WRAPPER, (void **)&var1))
+    {
+      return enif_make_badarg(env);
+    }
+    fprintf(stderr, "got first\n");
+
+    if (!enif_get_resource(env, argv[1], INT_VAR_WRAPPER, (void **)&var2))
+    {
+      return enif_make_badarg(env);
+    }
+    fprintf(stderr, "got second\n");
+
+    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
+    if (linear_expr_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    linear_expr_wrapper->p = new LinearExpr(LinearExpr::Sum({*var1->p, *var2->p}));
+    term = enif_make_resource(env, linear_expr_wrapper);
+    enif_release_resource(linear_expr_wrapper);
+
+    return term;
+  }
+
   static ErlNifFunc nif_funcs[] = {
+      {"add_equal_expr_nif", 3, add_equal_expr_nif},
       {"add_equal_int_nif", 3, add_equal_int_nif},
       {"add_not_equal_int_nif", 3, add_not_equal_int_nif},
+      {"add_equal_int_constant_nif", 3, add_equal_int_constant_nif},
       {"add_equal_bool_nif", 3, add_equal_bool_nif},
       {"add_not_equal_bool_nif", 3, add_not_equal_bool_nif},
+      {"add_greater_or_equal_nif", 3, add_greater_or_equal_nif},
+      {"add_less_or_equal_nif", 3, add_less_or_equal_nif},
       {"new_bool_var_nif", 2, new_bool_var_nif},
       {"new_int_var_nif", 4, new_int_var_nif},
       {"new_nif", 0, new_builder_nif},
       {"bool_not_nif", 1, bool_not_nif},
       {"solution_integer_value_nif", 2, solution_integer_value_nif},
       {"solution_bool_value_nif", 2, solution_bool_value_nif},
-      {"solve_nif", 1, solve_nif}};
+      {"solve_nif", 1, solve_nif},
+      {"sum_nif", 2, sum_nif}};
 
   ERL_NIF_INIT(Elixir.CpModelBuilder, nif_funcs, &load, NULL, NULL, NULL)
 }
