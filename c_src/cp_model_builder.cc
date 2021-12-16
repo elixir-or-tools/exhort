@@ -1,10 +1,10 @@
 #include <cstring>
-// #include <string.h>
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
 #include "wrappers.h"
 #include "linear_expression.h"
 #include "int_var.h"
+#include "cp_solver_response.h"
 
 using operations_research::Domain;
 using operations_research::sat::BoolVar;
@@ -19,7 +19,6 @@ extern "C"
   ErlNifResourceType *CP_MODEL_BUILDER_WRAPPER;
   ErlNifResourceType *BOOL_VAR_WRAPPER;
   ErlNifResourceType *CONSTRAINT_WRAPPER;
-  ErlNifResourceType *CP_SOLVER_RESPONSE_WRAPPER;
 
   ERL_NIF_TERM atom_ok;
 
@@ -41,12 +40,6 @@ extern "C"
     delete w->p;
   }
 
-  static void free_solver_response(ErlNifEnv *env, void *obj)
-  {
-    CpSolverResponseWrapper *w = (CpSolverResponseWrapper *)obj;
-    delete w->p;
-  }
-
   static int init_types(ErlNifEnv *env)
   {
     CP_MODEL_BUILDER_WRAPPER = enif_open_resource_type(env, NULL, "CpModelBuilderWrapper", free_cp_model_builder, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
@@ -54,8 +47,6 @@ extern "C"
     BOOL_VAR_WRAPPER = enif_open_resource_type(env, NULL, "BoolVarWrapper", free_bool_var, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
     CONSTRAINT_WRAPPER = enif_open_resource_type(env, NULL, "ConstraintWrapper", free_constraint, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
-
-    CP_SOLVER_RESPONSE_WRAPPER = enif_open_resource_type(env, NULL, "CpSolverResponse", free_solver_response, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
     atom_ok = enif_make_atom(env, "ok");
 
@@ -501,15 +492,10 @@ extern "C"
 
     CpSolverResponse response = Solve(builder_wrapper->p->Build());
 
-    CpSolverResponseWrapper *response_wrapper = (CpSolverResponseWrapper *)enif_alloc_resource(CP_SOLVER_RESPONSE_WRAPPER, sizeof(CpSolverResponseWrapper));
-    if (response_wrapper == NULL)
-      return enif_make_badarg(env);
+    term = make_cp_solver_response(env, response);
+    int64_t status = enif_make_int64(env, response.status());
 
-    response_wrapper->p = new CpSolverResponse(response);
-    term = enif_make_resource(env, response_wrapper);
-    enif_release_resource(response_wrapper);
-
-    return term;
+    return enif_make_tuple2(env, term, status);
   }
 
   ERL_NIF_TERM solution_bool_value_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -517,7 +503,7 @@ extern "C"
     CpSolverResponseWrapper *response;
     BoolVarWrapper *var;
 
-    if (!enif_get_resource(env, argv[0], CP_SOLVER_RESPONSE_WRAPPER, (void **)&response))
+    if (!get_cp_solver_response(env, argv[0], &response))
     {
       return enif_make_badarg(env);
     }
@@ -537,7 +523,7 @@ extern "C"
     CpSolverResponseWrapper *response;
     IntVarWrapper *var;
 
-    if (!enif_get_resource(env, argv[0], CP_SOLVER_RESPONSE_WRAPPER, (void **)&response))
+    if (!get_cp_solver_response(env, argv[0], &response))
     {
       return enif_make_badarg(env);
     }

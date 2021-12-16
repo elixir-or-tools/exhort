@@ -5,129 +5,174 @@ defmodule CpModelBuilder do
     %CpModelBuilder{}
   end
 
-  def def_bool_var(%{vars: vars} = builder, var) do
+  def def_bool_var(%CpModelBuilder{vars: vars} = builder, var) do
     %CpModelBuilder{builder | vars: Map.put(vars, var, %BoolVar{name: var})}
   end
 
-  def def_int_var(%{vars: vars} = builder, var, domain) do
+  def def_int_var(%CpModelBuilder{vars: vars} = builder, var, domain) do
     %CpModelBuilder{builder | vars: Map.put(vars, var, %IntVar{name: var, domain: domain})}
   end
 
-  def require(builder, constraint, var1, var2) do
-    %CpModelBuilder{builder | constraints: builder.constraints ++ [{constraint, var1, var2}]}
+  def require(builder, constraint, var1, var2, opts \\ [])
+
+  def require(
+        %CpModelBuilder{} = builder,
+        constraint,
+        %BoolVar{} = var1,
+        %BoolVar{} = var2,
+        opts
+      ) do
+    cond do
+      opts == [] ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, var1, var2}]
+        }
+
+      var3 = Keyword.get(opts, :if) ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, var1, var2, :if, var3}]
+        }
+
+      var3 = Keyword.get(opts, :unless) ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, var1, var2, :unless, var3}]
+        }
+    end
   end
 
-  def require(builder, constraint, var1, var2, if: var) do
-    %CpModelBuilder{
-      builder
-      | constraints: builder.constraints ++ [{constraint, var1, var2, :if, var}]
-    }
+  def require(
+        %CpModelBuilder{} = builder,
+        constraint,
+        %IntVar{} = var1,
+        %IntVar{} = var2,
+        opts
+      ) do
+    cond do
+      opts == [] ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, var1, var2}]
+        }
+
+      var3 = Keyword.get(opts, :if) ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, var1, var2, :if, var3}]
+        }
+
+      var3 = Keyword.get(opts, :unless) ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, var1, var2, :unless, var3}]
+        }
+    end
   end
 
-  def require(builder, constraint, var1, var2, unless: var) do
-    %CpModelBuilder{
-      builder
-      | constraints: builder.constraints ++ [{constraint, var1, var2, :unless, var}]
-    }
+  def require(
+        %CpModelBuilder{} = builder,
+        constraint,
+        atom1,
+        atom2,
+        opts
+      ) do
+    cond do
+      opts == [] ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, atom1, atom2}]
+        }
+
+      atom3 = Keyword.get(opts, :if) ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, atom1, atom2, :if, atom3}]
+        }
+
+      atom3 = Keyword.get(opts, :unless) ->
+        %CpModelBuilder{
+          builder
+          | constraints: builder.constraints ++ [{constraint, atom1, atom2, :unless, atom3}]
+        }
+    end
   end
 
-  def build(builder) do
+  def build(%CpModelBuilder{} = builder) do
     {:ok, res} = Nif.new_builder_nif()
     builder = %CpModelBuilder{builder | res: res}
 
     vars =
       builder.vars
       |> Enum.map(fn
-        {var, %BoolVar{}} ->
-          bool_var = new_bool_var(builder, Atom.to_string(var))
-          {var, bool_var}
+        {name, %BoolVar{} = var} ->
+          %BoolVar{res: res} = new_bool_var(builder, Atom.to_string(name))
+          {name, %BoolVar{var | res: res}}
 
-        {var, %IntVar{domain: {upper_bound, lower_bound}}} ->
-          int_var = new_int_var(builder, upper_bound, lower_bound, Atom.to_string(var))
-          {var, int_var}
+        {name, %IntVar{domain: {upper_bound, lower_bound}} = var} ->
+          %IntVar{res: res} = new_int_var(builder, upper_bound, lower_bound, Atom.to_string(name))
+          {name, %IntVar{var | res: res}}
       end)
       |> Enum.into(%{})
+
+    builder = %CpModelBuilder{builder | vars: vars}
 
     builder.constraints
     |> Enum.map(fn
       {:==, atom1, atom2} ->
         add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
 
-      {:==, %LinearExpression{} = expr, int3, :if, bool4} ->
+      {:==, %LinearExpression{} = expr, int3, :if, atom4} ->
         expr = LinearExpression.resolve(expr, vars)
         constraint = add_equal(builder, expr, int3)
-        var4 = Map.get(vars, bool4)
-        only_enforce_if(constraint, var4)
+        only_enforce_if(constraint, Map.get(vars, atom4))
 
-      {:==, atom1, atom2, :if, bool} ->
+      {:==, atom1, int2, :unless, atom3} when is_integer(int2) ->
+        constraint = add_equal(builder, Map.get(vars, atom1), int2)
+        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+        constraint
+
+      {:==, atom1, atom2, :if, atom3} ->
         constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, bool)
+        only_enforce_if(constraint, Map.get(vars, atom3))
         constraint
 
-      {:==, atom1, atom2, :unless, bool3} when is_atom(atom1) and is_atom(atom2) ->
-        var1 = Map.get(vars, atom1)
-        var2 = Map.get(vars, atom2)
-        constraint = add_equal(builder, var1, var2)
-        only_enforce_if(constraint, bool_not(Map.get(vars, bool3)))
-        constraint
-
-      {:==, atom1, int2, :unless, bool3} when is_atom(atom1) and is_integer(int2) ->
-        var1 = Map.get(vars, atom1)
-        constraint = add_equal(builder, var1, int2)
-        only_enforce_if(constraint, bool_not(Map.get(vars, bool3)))
+      {:==, atom1, atom2, :unless, atom3} ->
+        constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
         constraint
 
       {:!=, atom1, atom2} ->
         add_not_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
 
-      {:!=, atom1, atom2, :if, bool} ->
+      {:!=, atom1, atom2, :if, atom3} ->
         constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, bool)
+        only_enforce_if(constraint, Map.get(vars, atom3))
         constraint
 
-      {:!=, atom1, atom2, :unless, bool} ->
+      {:!=, atom1, atom2, :unless, atom3} ->
         constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, bool_not(bool))
+        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
         constraint
 
-      {:>=, atom1, int2, :if, bool3} ->
-        var1 = Map.get(vars, atom1)
-        var3 = Map.get(vars, bool3)
-        constraint = add_greater_or_equal(builder, var1, int2)
-        only_enforce_if(constraint, var3)
+      {:>=, atom1, int2, :if, atom3} ->
+        constraint = add_greater_or_equal(builder, Map.get(vars, atom1), int2)
+        only_enforce_if(constraint, Map.get(vars, atom3))
         constraint
 
-      {:<, atom1, int2, :unless, bool3} ->
-        var1 = Map.get(vars, atom1)
-        var3 = Map.get(vars, bool3)
-        constraint = add_less(builder, var1, int2)
-        only_enforce_if(constraint, bool_not(var3))
+      {:<, atom1, int2, :unless, atom3} ->
+        constraint = add_less(builder, Map.get(vars, atom1), int2)
+        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
         constraint
 
-      {:<=, atom1, int2, :unless, bool3} ->
-        var1 = Map.get(vars, atom1)
-        var3 = Map.get(vars, bool3)
-        constraint = add_less_or_equal(builder, var1, int2)
-        only_enforce_if(constraint, bool_not(var3))
+      {:<=, atom1, int2, :unless, atom3} ->
+        constraint = add_less_or_equal(builder, Map.get(vars, atom1), int2)
+        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
         constraint
     end)
 
-    %CpModelBuilder{builder | vars: vars}
-  end
-
-  def bool_val(%{builder: %{vars: vars}} = response, atom) do
-    %BoolVar{res: var_res} = Map.get(vars, atom)
-
-    if Nif.solution_bool_value_nif(response.res, var_res) == 1 do
-      true
-    else
-      false
-    end
-  end
-
-  def int_val(%CpSolverResponse{builder: %{vars: vars}} = response, atom) do
-    %IntVar{res: var_res} = Map.get(vars, atom)
-    Nif.solution_integer_value_nif(response.res, var_res)
+    builder
   end
 
   def new do
@@ -189,12 +234,8 @@ defmodule CpModelBuilder do
     %BoolVar{var | res: Nif.bool_not_nif(var.res)}
   end
 
-  def solve(cp_model_builder) do
-    res = Nif.solve_nif(cp_model_builder.res)
-    %CpSolverResponse{res: res, builder: cp_model_builder}
-  end
-
-  def solution_integer_value(response, var) do
-    Nif.solution_integer_value_nif(response.res, var.res)
+  def solve(%CpModelBuilder{} = cp_model_builder) do
+    Nif.solve_nif(cp_model_builder.res)
+    |> CpSolverResponse.build(cp_model_builder)
   end
 end

@@ -6,6 +6,7 @@
 #include "cp_model_builder.h"
 #include "linear_expression.h"
 #include "int_var.h"
+#include "cp_solver_response.h"
 
 extern "C"
 {
@@ -14,6 +15,7 @@ extern "C"
     load_cp_model_builder(env, priv, load_info);
     load_linear_expression(env, priv, load_info);
     load_int_var(env, priv, load_info);
+    load_cp_solver_response(env, priv, load_info);
 
     return 0;
   }

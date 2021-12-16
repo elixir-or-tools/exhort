@@ -51,14 +51,17 @@ defmodule Nif do
   def bool_not_nif(_var) do
   end
 
+  @spec solve_nif(any()) :: {any(), integer()}
   def solve_nif(_cp_model_builder) do
+    {:any, 0}
   end
 
   def solution_integer_value_nif(_cp_model_builder, _var) do
   end
 
+  @spec solution_bool_value_nif(any(), any()) :: integer()
   def solution_bool_value_nif(_cp_model_builder, _var) do
-    true
+    1
   end
 
   def sum_nif(_var1, _var2) do

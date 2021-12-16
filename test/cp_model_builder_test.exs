@@ -49,7 +49,7 @@ defmodule CpModelBuilderTest do
     _z = CpModelBuilder.new_int_var(cp_model_builder, 0, 2, "z")
     CpModelBuilder.add_not_equal(cp_model_builder, x, y)
     response = CpModelBuilder.solve(cp_model_builder)
-    assert 1 == CpModelBuilder.solution_integer_value(response, x)
+    assert 1 == CpSolverResponse.int_val(response, x)
   end
 
   test "simple sat program" do
@@ -60,9 +60,9 @@ defmodule CpModelBuilderTest do
     z = CpModelBuilder.new_int_var(cp_model_builder, 0, 2, "z")
     CpModelBuilder.add_not_equal(cp_model_builder, x, y)
     response = CpModelBuilder.solve(cp_model_builder)
-    assert 1 == CpModelBuilder.solution_integer_value(response, x)
-    assert 0 == CpModelBuilder.solution_integer_value(response, y)
-    assert 0 == CpModelBuilder.solution_integer_value(response, z)
+    assert 1 == CpSolverResponse.int_val(response, x)
+    assert 0 == CpSolverResponse.int_val(response, y)
+    assert 0 == CpSolverResponse.int_val(response, z)
   end
 
   test "simple sat program with DSL" do
@@ -80,9 +80,9 @@ defmodule CpModelBuilderTest do
       |> CpModelBuilder.build()
       |> CpModelBuilder.solve()
 
-    assert 1 == CpModelBuilder.int_val(response, :x)
-    assert 0 == CpModelBuilder.int_val(response, :y)
-    assert 0 == CpModelBuilder.int_val(response, :z)
+    assert 1 == CpSolverResponse.int_val(response, :x)
+    assert 0 == CpSolverResponse.int_val(response, :y)
+    assert 0 == CpSolverResponse.int_val(response, :z)
   end
 
   test "simple bool DSL" do
@@ -99,8 +99,8 @@ defmodule CpModelBuilderTest do
       |> CpModelBuilder.build()
       |> CpModelBuilder.solve()
 
-    assert CpModelBuilder.bool_val(response, :x)
-    refute CpModelBuilder.bool_val(response, :y)
+    assert CpSolverResponse.bool_val(response, :x)
+    refute CpSolverResponse.bool_val(response, :y)
   end
 
   test "channeling sample problem with a tweak" do
@@ -120,8 +120,8 @@ defmodule CpModelBuilderTest do
       |> CpModelBuilder.build()
       |> CpModelBuilder.solve()
 
-    assert 10 == CpModelBuilder.int_val(response, :x)
-    assert 0 == CpModelBuilder.int_val(response, :y)
-    assert false == CpModelBuilder.bool_val(response, :b)
+    assert 10 == CpSolverResponse.int_val(response, :x)
+    assert 0 == CpSolverResponse.int_val(response, :y)
+    assert false == CpSolverResponse.bool_val(response, :b)
   end
 end
