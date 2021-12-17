@@ -1,21 +1,55 @@
 defmodule CpModelBuilder do
+  @moduledoc """
+  Provide for the building of a model for eventual solving.
+  """
+
+  @type t :: %__MODULE__{}
   defstruct res: nil, vars: %{}, constraints: []
 
-  def new_builder do
+  @doc """
+  Start a new builder.
+  """
+  @spec new() :: CpModelBuilder.t()
+  def new do
     %CpModelBuilder{}
   end
 
+  @doc """
+  Define a boolean variable in the model.
+  """
+  @spec def_bool_var(CpModelBuilder.t(), atom() | String.t()) :: CpModelBuilder.t()
   def def_bool_var(%CpModelBuilder{vars: vars} = builder, var) do
     %CpModelBuilder{builder | vars: Map.put(vars, var, %BoolVar{name: var})}
   end
 
+  @doc """
+  Define an integer variable in the model.
+  """
+  @spec def_int_var(CpModelBuilder.t(), atom() | String.t(), {integer(), integer()}) ::
+          CpModelBuilder.t()
   def def_int_var(%CpModelBuilder{vars: vars} = builder, var, domain) do
     %CpModelBuilder{builder | vars: Map.put(vars, var, %IntVar{name: var, domain: domain})}
   end
 
-  def require(builder, constraint, var1, var2, opts \\ [])
+  @doc """
+  Define a constraint on the model using variables.
 
-  def require(
+  - `constraint` is specified as an atom.
+  - `var1` and `var2` may be an atom, a string, or an existing `BoolVar` or `IntVar`.
+  - `opts` may specify a restriction on the constraint:
+      - `if: bool` specifies that a constraint only takes effect if `bool` is true
+      - `unless: bool` specifies that a constraint only takes effect if `bool` is false
+  """
+  @spec constrain(
+          CpModelBuilder.t(),
+          Constraint.constraint(),
+          atom() | String.t() | BoolVar.t() | IntVar.t(),
+          atom() | String.t() | BoolVar.t() | IntVar.t(),
+          Keyword.t()
+        ) :: CpModelBuilder.t()
+  def constrain(builder, constraint, var1, var2, opts \\ [])
+
+  def constrain(
         %CpModelBuilder{} = builder,
         constraint,
         %BoolVar{} = var1,
@@ -26,24 +60,26 @@ defmodule CpModelBuilder do
       opts == [] ->
         %CpModelBuilder{
           builder
-          | constraints: builder.constraints ++ [{constraint, var1, var2}]
+          | constraints: builder.constraints ++ [{constraint, var1.name, var2.name}]
         }
 
       var3 = Keyword.get(opts, :if) ->
         %CpModelBuilder{
           builder
-          | constraints: builder.constraints ++ [{constraint, var1, var2, :if, var3}]
+          | constraints:
+              builder.constraints ++ [{constraint, var1.name, var2.name, :if, var3.name}]
         }
 
       var3 = Keyword.get(opts, :unless) ->
         %CpModelBuilder{
           builder
-          | constraints: builder.constraints ++ [{constraint, var1, var2, :unless, var3}]
+          | constraints:
+              builder.constraints ++ [{constraint, var1.name, var2.name, :unless, var3.name}]
         }
     end
   end
 
-  def require(
+  def constrain(
         %CpModelBuilder{} = builder,
         constraint,
         %IntVar{} = var1,
@@ -71,7 +107,7 @@ defmodule CpModelBuilder do
     end
   end
 
-  def require(
+  def constrain(
         %CpModelBuilder{} = builder,
         constraint,
         atom1,
@@ -99,19 +135,22 @@ defmodule CpModelBuilder do
     end
   end
 
+  @doc """
+  Build the model.
+  """
+  @spec build(CpModelBuilder.t()) :: CpModelBuilder.t()
   def build(%CpModelBuilder{} = builder) do
-    {:ok, res} = Nif.new_builder_nif()
-    builder = %CpModelBuilder{builder | res: res}
+    builder = %CpModelBuilder{builder | res: Nif.new_builder_nif()}
 
     vars =
       builder.vars
       |> Enum.map(fn
         {name, %BoolVar{} = var} ->
-          %BoolVar{res: res} = new_bool_var(builder, Atom.to_string(name))
+          %BoolVar{res: res} = new_bool_var(builder, to_str(name))
           {name, %BoolVar{var | res: res}}
 
         {name, %IntVar{domain: {upper_bound, lower_bound}} = var} ->
-          %IntVar{res: res} = new_int_var(builder, upper_bound, lower_bound, Atom.to_string(name))
+          %IntVar{res: res} = new_int_var(builder, upper_bound, lower_bound, to_str(name))
           {name, %IntVar{var | res: res}}
       end)
       |> Enum.into(%{})
@@ -175,67 +214,64 @@ defmodule CpModelBuilder do
     builder
   end
 
-  def new do
-    {:ok, res} = Nif.new_builder_nif()
-    {:ok, %CpModelBuilder{res: res}}
+  def solve(%CpModelBuilder{res: res} = builder) when not is_nil(res) do
+    CpSolverResponse.build(Nif.solve_nif(builder.res), builder)
   end
 
-  def new_bool_var(%{res: res} = _cp_model_builder, name) do
+  defp to_str(val) when is_atom(val), do: Atom.to_string(val)
+  defp to_str(val), do: val
+
+  defp new_bool_var(%{res: res} = _cp_model_builder, name) do
     res = Nif.new_bool_var_nif(res, name)
     %BoolVar{res: res, name: String.to_atom(name)}
   end
 
-  def new_int_var(%{res: res} = _cp_model_builder, upper_bound, lower_bound, name) do
+  defp new_int_var(%{res: res} = _cp_model_builder, upper_bound, lower_bound, name) do
     res = Nif.new_int_var_nif(res, upper_bound, lower_bound, name)
     %IntVar{res: res, name: String.to_atom(name), domain: {upper_bound, lower_bound}}
   end
 
-  def add_equal(cp_model_builder, %LinearExpression{} = expr1, constant2) do
+  defp add_equal(cp_model_builder, %LinearExpression{} = expr1, constant2) do
     Nif.add_equal_expr_nif(cp_model_builder.res, expr1.res, constant2)
   end
 
-  def add_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
+  defp add_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
     Nif.add_equal_bool_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
-  def add_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
+  defp add_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
     Nif.add_equal_int_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
-  def add_equal(cp_model_builder, %IntVar{} = var1, int2) do
+  defp add_equal(cp_model_builder, %IntVar{} = var1, int2) do
     Nif.add_equal_int_constant_nif(cp_model_builder.res, var1.res, int2)
   end
 
-  def add_not_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
+  defp add_not_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
     Nif.add_not_equal_bool_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
-  def add_not_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
+  defp add_not_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
     Nif.add_not_equal_int_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
-  def add_greater_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
+  defp add_greater_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
     Nif.add_greater_or_equal_nif(cp_model_builder.res, var1.res, int2)
   end
 
-  def add_less(cp_model_builder, %IntVar{} = var1, int2) do
+  defp add_less(cp_model_builder, %IntVar{} = var1, int2) do
     Nif.add_less_nif(cp_model_builder.res, var1.res, int2)
   end
 
-  def add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
+  defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
     Nif.add_greater_or_equal_nif(cp_model_builder.res, var1.res, int2)
   end
 
-  def only_enforce_if(constraint, %BoolVar{} = var) do
+  defp only_enforce_if(constraint, %BoolVar{} = var) do
     Nif.only_enforce_if_nif(constraint, var.res)
   end
 
-  def bool_not(%BoolVar{} = var) do
+  defp bool_not(%BoolVar{} = var) do
     %BoolVar{var | res: Nif.bool_not_nif(var.res)}
-  end
-
-  def solve(%CpModelBuilder{} = cp_model_builder) do
-    Nif.solve_nif(cp_model_builder.res)
-    |> CpSolverResponse.build(cp_model_builder)
   end
 end

@@ -65,7 +65,7 @@ extern "C"
     term = enif_make_resource(env, builder_wrapper);
     enif_release_resource(builder_wrapper);
 
-    return enif_make_tuple2(env, atom_ok, term);
+    return term;
   }
 
   ERL_NIF_TERM new_bool_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])

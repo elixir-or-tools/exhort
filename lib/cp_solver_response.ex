@@ -1,6 +1,12 @@
 defmodule CpSolverResponse do
+  @moduledoc """
+  A response from solving a model.
+  """
+
+  @type t :: %__MODULE__{}
   defstruct [:res, :builder, :status, :int_status]
 
+  @spec build({any(), integer()}, CpModelBuilder.t()) :: CpSolverResponse.t()
   def build({res, int_status}, builder) do
     %CpSolverResponse{
       res: res,
