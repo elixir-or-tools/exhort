@@ -1,4 +1,4 @@
-defmodule BoolVar do
+defmodule Exhort.SAT.BoolVar do
   @moduledoc """
   A boolean variable defined in the model.
   """

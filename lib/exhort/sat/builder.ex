@@ -1,4 +1,4 @@
-defmodule CpModelBuilder do
+defmodule Exhort.SAT.Builder do
   @moduledoc """
   Provide for the building of a model for eventual solving.
   """
@@ -6,29 +6,37 @@ defmodule CpModelBuilder do
   @type t :: %__MODULE__{}
   defstruct res: nil, vars: %{}, constraints: []
 
+  alias __MODULE__
+  alias Exhort.NIF.Nif
+  alias Exhort.SAT.BoolVar
+  alias Exhort.SAT.Builder
+  alias Exhort.SAT.IntVar
+  alias Exhort.SAT.LinearExpression
+  alias Exhort.SAT.Model
+
   @doc """
   Start a new builder.
   """
-  @spec new() :: CpModelBuilder.t()
+  @spec new() :: Builder.t()
   def new do
-    %CpModelBuilder{}
+    %Builder{}
   end
 
   @doc """
   Define a boolean variable in the model.
   """
-  @spec def_bool_var(CpModelBuilder.t(), atom() | String.t()) :: CpModelBuilder.t()
-  def def_bool_var(%CpModelBuilder{vars: vars} = builder, var) do
-    %CpModelBuilder{builder | vars: Map.put(vars, var, %BoolVar{name: var})}
+  @spec def_bool_var(Builder.t(), atom() | String.t()) :: Builder.t()
+  def def_bool_var(%Builder{vars: vars} = builder, var) do
+    %Builder{builder | vars: Map.put(vars, var, %BoolVar{name: var})}
   end
 
   @doc """
   Define an integer variable in the model.
   """
-  @spec def_int_var(CpModelBuilder.t(), atom() | String.t(), {integer(), integer()}) ::
-          CpModelBuilder.t()
-  def def_int_var(%CpModelBuilder{vars: vars} = builder, var, domain) do
-    %CpModelBuilder{builder | vars: Map.put(vars, var, %IntVar{name: var, domain: domain})}
+  @spec def_int_var(Builder.t(), atom() | String.t(), {integer(), integer()}) ::
+          Builder.t()
+  def def_int_var(%Builder{vars: vars} = builder, var, domain) do
+    %Builder{builder | vars: Map.put(vars, var, %IntVar{name: var, domain: domain})}
   end
 
   @doc """
@@ -41,16 +49,16 @@ defmodule CpModelBuilder do
       - `unless: bool` specifies that a constraint only takes effect if `bool` is false
   """
   @spec constrain(
-          CpModelBuilder.t(),
+          Builder.t(),
           Constraint.constraint(),
           atom() | String.t() | BoolVar.t() | IntVar.t(),
           atom() | String.t() | BoolVar.t() | IntVar.t(),
           Keyword.t()
-        ) :: CpModelBuilder.t()
+        ) :: Builder.t()
   def constrain(builder, constraint, var1, var2, opts \\ [])
 
   def constrain(
-        %CpModelBuilder{} = builder,
+        %Builder{} = builder,
         constraint,
         %BoolVar{} = var1,
         %BoolVar{} = var2,
@@ -58,20 +66,20 @@ defmodule CpModelBuilder do
       ) do
     cond do
       opts == [] ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints: builder.constraints ++ [{constraint, var1.name, var2.name}]
         }
 
       var3 = Keyword.get(opts, :if) ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints:
               builder.constraints ++ [{constraint, var1.name, var2.name, :if, var3.name}]
         }
 
       var3 = Keyword.get(opts, :unless) ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints:
               builder.constraints ++ [{constraint, var1.name, var2.name, :unless, var3.name}]
@@ -80,7 +88,7 @@ defmodule CpModelBuilder do
   end
 
   def constrain(
-        %CpModelBuilder{} = builder,
+        %Builder{} = builder,
         constraint,
         %IntVar{} = var1,
         %IntVar{} = var2,
@@ -88,19 +96,19 @@ defmodule CpModelBuilder do
       ) do
     cond do
       opts == [] ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints: builder.constraints ++ [{constraint, var1, var2}]
         }
 
       var3 = Keyword.get(opts, :if) ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints: builder.constraints ++ [{constraint, var1, var2, :if, var3}]
         }
 
       var3 = Keyword.get(opts, :unless) ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints: builder.constraints ++ [{constraint, var1, var2, :unless, var3}]
         }
@@ -108,7 +116,7 @@ defmodule CpModelBuilder do
   end
 
   def constrain(
-        %CpModelBuilder{} = builder,
+        %Builder{} = builder,
         constraint,
         atom1,
         atom2,
@@ -116,19 +124,19 @@ defmodule CpModelBuilder do
       ) do
     cond do
       opts == [] ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints: builder.constraints ++ [{constraint, atom1, atom2}]
         }
 
       atom3 = Keyword.get(opts, :if) ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints: builder.constraints ++ [{constraint, atom1, atom2, :if, atom3}]
         }
 
       atom3 = Keyword.get(opts, :unless) ->
-        %CpModelBuilder{
+        %Builder{
           builder
           | constraints: builder.constraints ++ [{constraint, atom1, atom2, :unless, atom3}]
         }
@@ -138,9 +146,9 @@ defmodule CpModelBuilder do
   @doc """
   Build the model. Once the model is built it may be solved.
   """
-  @spec build(CpModelBuilder.t()) :: Model.t()
-  def build(%CpModelBuilder{} = builder) do
-    builder = %CpModelBuilder{builder | res: Nif.new_builder_nif()}
+  @spec build(Builder.t()) :: Model.t()
+  def build(%Builder{} = builder) do
+    builder = %Builder{builder | res: Nif.new_builder_nif()}
 
     vars =
       builder.vars
@@ -155,7 +163,7 @@ defmodule CpModelBuilder do
       end)
       |> Enum.into(%{})
 
-    builder = %CpModelBuilder{builder | vars: vars}
+    builder = %Builder{builder | vars: vars}
 
     constraints =
       builder.constraints

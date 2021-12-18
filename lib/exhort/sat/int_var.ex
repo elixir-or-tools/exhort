@@ -1,4 +1,4 @@
-defmodule IntVar do
+defmodule Exhort.SAT.IntVar do
   @moduledoc """
   An integer variable defined in the model.
   """

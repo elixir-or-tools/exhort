@@ -1,4 +1,4 @@
-defmodule Nif do
+defmodule Exhort.NIF.Nif do
   @moduledoc """
   Interface to all the NIF implementations.
   """

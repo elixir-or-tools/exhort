@@ -1,4 +1,4 @@
-defmodule Constraint do
+defmodule Exhort.SAT.Constraint do
   @moduledoc """
   A constraint on the model.
   """

@@ -39,5 +39,5 @@ extern "C"
       {"solve_with_callback_nif", 2, solve_with_callback_nif},
       {"sum_nif", 2, sum_nif}};
 
-  ERL_NIF_INIT(Elixir.Nif, nif_funcs, &load, NULL, NULL, NULL)
+  ERL_NIF_INIT(Elixir.Exhort.NIF.Nif, nif_funcs, &load, NULL, NULL, NULL)
 }

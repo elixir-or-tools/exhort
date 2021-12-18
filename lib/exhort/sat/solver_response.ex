@@ -1,4 +1,4 @@
-defmodule CpSolverResponse do
+defmodule Exhort.SAT.SolverResponse do
   @moduledoc """
   A response from solving a model.
   """
@@ -6,9 +6,13 @@ defmodule CpSolverResponse do
   @type t :: %__MODULE__{}
   defstruct [:res, :model, :status, :int_status]
 
-  @spec build({any(), integer()}, Model.t()) :: CpSolverResponse.t()
+  alias __MODULE__
+  alias Exhort.NIF.Nif
+  alias Exhort.SAT.IntVar
+
+  @spec build({any(), integer()}, Model.t()) :: SolverResponse.t()
   def build({res, int_status}, model) do
-    %CpSolverResponse{
+    %SolverResponse{
       res: res,
       model: model,
       status: status_from_int(int_status),
@@ -32,11 +36,11 @@ defmodule CpSolverResponse do
   def int_val(%{status: status}, _atom) when status in [:unknown, :model_invalid, :infeasible],
     do: nil
 
-  def int_val(%CpSolverResponse{} = response, %IntVar{} = var) do
+  def int_val(%SolverResponse{} = response, %IntVar{} = var) do
     Nif.solution_integer_value_nif(response.res, var.res)
   end
 
-  def int_val(%CpSolverResponse{model: %{vars: vars}} = response, atom) do
+  def int_val(%SolverResponse{model: %{vars: vars}} = response, atom) do
     %IntVar{res: var_res} = Map.get(vars, atom)
     Nif.solution_integer_value_nif(response.res, var_res)
   end
