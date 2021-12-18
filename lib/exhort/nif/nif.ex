@@ -33,6 +33,9 @@ defmodule Exhort.NIF.Nif do
   def add_equal_int_constant_nif(_cp_model_builder, _var1, _var2) do
   end
 
+  def add_equal_int_expr_nif(_cp_model_builder, _var1, _expr2) do
+  end
+
   def add_not_equal_int_nif(_cp_model_builder, _var1, _var2) do
   end
 
@@ -47,6 +50,12 @@ defmodule Exhort.NIF.Nif do
 
   def only_enforce_if_nif(_constraint, _var) do
   end
+
+  def add_abs_equal_nif(_builder, _var1, _var2), do: nil
+
+  def add_abs_equal_constant_nif(_builder, _var1, _constant2), do: nil
+
+  def add_all_different_nif(_builder, _var_list), do: nil
 
   def bool_not_nif(_var) do
   end
@@ -69,6 +78,13 @@ defmodule Exhort.NIF.Nif do
     1
   end
 
-  def sum_nif(_var1, _var2) do
-  end
+  def sum_nif(_var1, _var2), do: nil
+
+  def sum_int_var_expr_nif(_var1, _expr2), do: nil
+
+  def sum_int_var_constant_nif(_var, _constant), do: nil
+
+  def minus_nif(_var1, _var2), do: nil
+
+  def prod_nif(_var1, _var2), do: nil
 end

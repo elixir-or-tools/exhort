@@ -1,6 +1,8 @@
 defmodule Exhort.SAT.SolverResponse do
   @moduledoc """
   A response from solving a model.
+
+  Provides functions for retrieving variable values from the response.
   """
 
   @type t :: %__MODULE__{}
@@ -9,6 +11,7 @@ defmodule Exhort.SAT.SolverResponse do
   alias __MODULE__
   alias Exhort.NIF.Nif
   alias Exhort.SAT.IntVar
+  alias Exhort.SAT.Model
 
   @spec build({any(), integer()}, Model.t()) :: SolverResponse.t()
   def build({res, int_status}, model) do

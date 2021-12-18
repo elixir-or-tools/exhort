@@ -1,6 +1,6 @@
 defmodule Exhort.SAT.Model do
   @moduledoc """
-  The model built from the `CpModelBuilder`.
+  The model built from the `Builder`.
   """
 
   @type t :: %__MODULE__{}
