@@ -10,7 +10,7 @@ extern "C"
 
   int get_cp_solver_response(ErlNifEnv *env, ERL_NIF_TERM term, CpSolverResponseWrapper **obj);
 
-  ERL_NIF_TERM make_cp_solver_response(ErlNifEnv *env, CpSolverResponse &from_int_var);
+  ERL_NIF_TERM make_cp_solver_response(ErlNifEnv *env, const CpSolverResponse &from_int_var);
 }
 
 #endif

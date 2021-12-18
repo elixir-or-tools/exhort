@@ -26,7 +26,7 @@ extern "C"
     return enif_get_resource(env, term, CP_SOLVER_RESPONSE_WRAPPER, (void **)obj);
   }
 
-  ERL_NIF_TERM make_cp_solver_response(ErlNifEnv *env, CpSolverResponse &from_cp_solver_response)
+  ERL_NIF_TERM make_cp_solver_response(ErlNifEnv *env, const CpSolverResponse &from_cp_solver_response)
   {
     CpSolverResponseWrapper *cp_solver_response_wrapper = (CpSolverResponseWrapper *)enif_alloc_resource(CP_SOLVER_RESPONSE_WRAPPER, sizeof(CpSolverResponseWrapper));
     if (cp_solver_response_wrapper == NULL)

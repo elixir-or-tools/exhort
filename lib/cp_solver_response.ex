@@ -4,13 +4,13 @@ defmodule CpSolverResponse do
   """
 
   @type t :: %__MODULE__{}
-  defstruct [:res, :builder, :status, :int_status]
+  defstruct [:res, :model, :status, :int_status]
 
-  @spec build({any(), integer()}, CpModelBuilder.t()) :: CpSolverResponse.t()
-  def build({res, int_status}, builder) do
+  @spec build({any(), integer()}, Model.t()) :: CpSolverResponse.t()
+  def build({res, int_status}, model) do
     %CpSolverResponse{
       res: res,
-      builder: builder,
+      model: model,
       status: status_from_int(int_status),
       int_status: int_status
     }
@@ -24,7 +24,7 @@ defmodule CpSolverResponse do
   def bool_val(%{status: status}, _atom) when status in [:unknown, :model_invalid, :infeasible],
     do: nil
 
-  def bool_val(%{builder: %{vars: vars}} = response, atom) do
+  def bool_val(%{model: %{vars: vars}} = response, atom) do
     var = Map.get(vars, atom)
     Nif.solution_bool_value_nif(response.res, var.res) == 1
   end
@@ -36,7 +36,7 @@ defmodule CpSolverResponse do
     Nif.solution_integer_value_nif(response.res, var.res)
   end
 
-  def int_val(%CpSolverResponse{builder: %{vars: vars}} = response, atom) do
+  def int_val(%CpSolverResponse{model: %{vars: vars}} = response, atom) do
     %IntVar{res: var_res} = Map.get(vars, atom)
     Nif.solution_integer_value_nif(response.res, var_res)
   end

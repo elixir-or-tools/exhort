@@ -56,6 +56,11 @@ defmodule Nif do
     {:any, 0}
   end
 
+  @spec solve_with_callback_nif(any(), pid()) :: {any(), integer()}
+  def solve_with_callback_nif(_cp_model_builder, _pid) do
+    {:any, 0}
+  end
+
   def solution_integer_value_nif(_cp_model_builder, _var) do
   end
 

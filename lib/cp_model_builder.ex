@@ -136,9 +136,9 @@ defmodule CpModelBuilder do
   end
 
   @doc """
-  Build the model.
+  Build the model. Once the model is built it may be solved.
   """
-  @spec build(CpModelBuilder.t()) :: CpModelBuilder.t()
+  @spec build(CpModelBuilder.t()) :: Model.t()
   def build(%CpModelBuilder{} = builder) do
     builder = %CpModelBuilder{builder | res: Nif.new_builder_nif()}
 
@@ -157,65 +157,63 @@ defmodule CpModelBuilder do
 
     builder = %CpModelBuilder{builder | vars: vars}
 
-    builder.constraints
-    |> Enum.map(fn
-      {:==, atom1, atom2} ->
-        add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+    constraints =
+      builder.constraints
+      |> Enum.map(fn
+        {:==, atom1, atom2} ->
+          add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
 
-      {:==, %LinearExpression{} = expr, int3, :if, atom4} ->
-        expr = LinearExpression.resolve(expr, vars)
-        constraint = add_equal(builder, expr, int3)
-        only_enforce_if(constraint, Map.get(vars, atom4))
+        {:==, %LinearExpression{} = expr, int3, :if, atom4} ->
+          expr = LinearExpression.resolve(expr, vars)
+          constraint = add_equal(builder, expr, int3)
+          only_enforce_if(constraint, Map.get(vars, atom4))
+          constraint
 
-      {:==, atom1, int2, :unless, atom3} when is_integer(int2) ->
-        constraint = add_equal(builder, Map.get(vars, atom1), int2)
-        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
-        constraint
+        {:==, atom1, int2, :unless, atom3} when is_integer(int2) ->
+          constraint = add_equal(builder, Map.get(vars, atom1), int2)
+          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+          constraint
 
-      {:==, atom1, atom2, :if, atom3} ->
-        constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, Map.get(vars, atom3))
-        constraint
+        {:==, atom1, atom2, :if, atom3} ->
+          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+          only_enforce_if(constraint, Map.get(vars, atom3))
+          constraint
 
-      {:==, atom1, atom2, :unless, atom3} ->
-        constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
-        constraint
+        {:==, atom1, atom2, :unless, atom3} ->
+          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+          constraint
 
-      {:!=, atom1, atom2} ->
-        add_not_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+        {:!=, atom1, atom2} ->
+          add_not_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
 
-      {:!=, atom1, atom2, :if, atom3} ->
-        constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, Map.get(vars, atom3))
-        constraint
+        {:!=, atom1, atom2, :if, atom3} ->
+          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+          only_enforce_if(constraint, Map.get(vars, atom3))
+          constraint
 
-      {:!=, atom1, atom2, :unless, atom3} ->
-        constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
-        constraint
+        {:!=, atom1, atom2, :unless, atom3} ->
+          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+          constraint
 
-      {:>=, atom1, int2, :if, atom3} ->
-        constraint = add_greater_or_equal(builder, Map.get(vars, atom1), int2)
-        only_enforce_if(constraint, Map.get(vars, atom3))
-        constraint
+        {:>=, atom1, int2, :if, atom3} ->
+          constraint = add_greater_or_equal(builder, Map.get(vars, atom1), int2)
+          only_enforce_if(constraint, Map.get(vars, atom3))
+          constraint
 
-      {:<, atom1, int2, :unless, atom3} ->
-        constraint = add_less(builder, Map.get(vars, atom1), int2)
-        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
-        constraint
+        {:<, atom1, int2, :unless, atom3} ->
+          constraint = add_less(builder, Map.get(vars, atom1), int2)
+          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+          constraint
 
-      {:<=, atom1, int2, :unless, atom3} ->
-        constraint = add_less_or_equal(builder, Map.get(vars, atom1), int2)
-        only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
-        constraint
-    end)
+        {:<=, atom1, int2, :unless, atom3} ->
+          constraint = add_less_or_equal(builder, Map.get(vars, atom1), int2)
+          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+          constraint
+      end)
 
-    builder
-  end
-
-  def solve(%CpModelBuilder{res: res} = builder) when not is_nil(res) do
-    CpSolverResponse.build(Nif.solve_nif(builder.res), builder)
+    %Model{res: builder.res, vars: vars, constraints: constraints}
   end
 
   defp to_str(val) when is_atom(val), do: Atom.to_string(val)

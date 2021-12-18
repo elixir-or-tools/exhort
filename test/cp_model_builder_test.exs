@@ -2,46 +2,46 @@ defmodule CpModelBuilderTest do
   use ExUnit.Case
 
   test "new int var" do
-    builder = CpModelBuilder.new()
-    assert CpModelBuilder.def_int_var(builder, "x", {0, 2})
+    model = CpModelBuilder.new()
+    assert CpModelBuilder.def_int_var(model, "x", {0, 2})
   end
 
   test "new bool var" do
-    builder = CpModelBuilder.new()
-    assert CpModelBuilder.def_bool_var(builder, "x")
+    model = CpModelBuilder.new()
+    assert CpModelBuilder.def_bool_var(model, "x")
   end
 
   test "equal" do
-    builder =
+    model =
       CpModelBuilder.new()
       |> CpModelBuilder.def_int_var("x", {0, 2})
       |> CpModelBuilder.def_int_var("y", {0, 2})
 
-    assert CpModelBuilder.constrain(builder, :==, "x", "y")
+    assert CpModelBuilder.constrain(model, :==, "x", "y")
   end
 
   test "not equal" do
-    builder =
+    model =
       CpModelBuilder.new()
       |> CpModelBuilder.def_int_var("x", {0, 2})
       |> CpModelBuilder.def_int_var("y", {0, 2})
 
-    assert CpModelBuilder.constrain(builder, :!=, :x, :y)
+    assert CpModelBuilder.constrain(model, :!=, :x, :y)
   end
 
   test "solve" do
-    builder =
+    model =
       CpModelBuilder.new()
       |> CpModelBuilder.def_int_var("x", {0, 2})
       |> CpModelBuilder.def_int_var("y", {0, 2})
       |> CpModelBuilder.constrain(:!=, "x", "y")
       |> CpModelBuilder.build()
 
-    assert %CpSolverResponse{} = CpModelBuilder.solve(builder)
+    assert %CpSolverResponse{} = Model.solve(model)
   end
 
   test "solution int value" do
-    builder =
+    model =
       CpModelBuilder.new()
       |> CpModelBuilder.def_int_var("x", {0, 2})
       |> CpModelBuilder.def_int_var("y", {0, 2})
@@ -49,12 +49,12 @@ defmodule CpModelBuilderTest do
       |> CpModelBuilder.constrain(:!=, "x", "y")
       |> CpModelBuilder.build()
 
-    response = CpModelBuilder.solve(builder)
+    response = Model.solve(model)
     assert 1 == CpSolverResponse.int_val(response, "x")
   end
 
   test "simple sat program" do
-    builder =
+    model =
       CpModelBuilder.new()
       |> CpModelBuilder.def_int_var("x", {0, 2})
       |> CpModelBuilder.def_int_var("y", {0, 2})
@@ -62,7 +62,7 @@ defmodule CpModelBuilderTest do
       |> CpModelBuilder.constrain(:!=, "x", "y")
       |> CpModelBuilder.build()
 
-    response = CpModelBuilder.solve(builder)
+    response = Model.solve(model)
     assert 1 == CpSolverResponse.int_val(response, "x")
     assert 0 == CpSolverResponse.int_val(response, "y")
     assert 0 == CpSolverResponse.int_val(response, "z")
@@ -81,7 +81,7 @@ defmodule CpModelBuilderTest do
     response =
       builder
       |> CpModelBuilder.build()
-      |> CpModelBuilder.solve()
+      |> Model.solve()
 
     assert 1 == CpSolverResponse.int_val(response, :x)
     assert 0 == CpSolverResponse.int_val(response, :y)
@@ -99,7 +99,7 @@ defmodule CpModelBuilderTest do
     response =
       builder
       |> CpModelBuilder.build()
-      |> CpModelBuilder.solve()
+      |> Model.solve()
 
     assert CpSolverResponse.bool_val(response, "x")
     refute CpSolverResponse.bool_val(response, "y")
@@ -117,7 +117,7 @@ defmodule CpModelBuilderTest do
     response =
       builder
       |> CpModelBuilder.build()
-      |> CpModelBuilder.solve()
+      |> Model.solve()
 
     assert CpSolverResponse.bool_val(response, :x)
     refute CpSolverResponse.bool_val(response, :y)
@@ -135,14 +135,18 @@ defmodule CpModelBuilderTest do
       |> CpModelBuilder.constrain(:==, LinearExpression.sum(:x, :y), 10, if: :b)
       |> CpModelBuilder.constrain(:==, :y, 0, unless: :b)
 
-    response =
+    {response, acc} =
       builder
       |> CpModelBuilder.build()
-      |> CpModelBuilder.solve()
+      |> Model.solve(fn
+        _response, nil -> 1
+        _response, acc -> acc + 1
+      end)
 
     assert response.status == :optimal
     assert 10 == CpSolverResponse.int_val(response, :x)
     assert 0 == CpSolverResponse.int_val(response, :y)
-    assert false == CpSolverResponse.bool_val(response, :b)
+    assert CpSolverResponse.bool_val(response, :b)
+    assert 2 == acc
   end
 end

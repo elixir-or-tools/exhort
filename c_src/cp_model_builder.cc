@@ -1,10 +1,14 @@
 #include <cstring>
+#include <iostream>
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
 #include "wrappers.h"
 #include "linear_expression.h"
 #include "int_var.h"
 #include "cp_solver_response.h"
+
+#include "ortools/sat/model.h"
+#include "ortools/sat/sat_parameters.pb.h"
 
 using operations_research::Domain;
 using operations_research::sat::BoolVar;
@@ -13,6 +17,12 @@ using operations_research::sat::CpModelBuilder;
 using operations_research::sat::CpSolverResponse;
 using operations_research::sat::IntVar;
 using operations_research::sat::LinearExpr;
+
+using operations_research::sat::Model;
+using operations_research::sat::NewFeasibleSolutionObserver;
+using operations_research::sat::SatParameters;
+
+using namespace std;
 
 extern "C"
 {
@@ -55,14 +65,12 @@ extern "C"
 
   ERL_NIF_TERM new_builder_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
-    ERL_NIF_TERM term;
-
     BuilderWrapper *builder_wrapper = (BuilderWrapper *)enif_alloc_resource(CP_MODEL_BUILDER_WRAPPER, sizeof(BuilderWrapper));
     if (builder_wrapper == NULL)
       return enif_make_badarg(env);
 
     builder_wrapper->p = new CpModelBuilder();
-    term = enif_make_resource(env, builder_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, builder_wrapper);
     enif_release_resource(builder_wrapper);
 
     return term;
@@ -72,7 +80,6 @@ extern "C"
   {
     BuilderWrapper *builder_wrapper;
     ErlNifBinary name;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -87,7 +94,7 @@ extern "C"
       return enif_make_badarg(env);
 
     bool_var_wrapper->p = new BoolVar(v);
-    term = enif_make_resource(env, bool_var_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, bool_var_wrapper);
     enif_release_resource(bool_var_wrapper);
 
     return term;
@@ -97,7 +104,6 @@ extern "C"
   {
     BuilderWrapper *builder_wrapper;
     ErlNifBinary name;
-    ERL_NIF_TERM term;
     int upper_bound, lower_bound;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
@@ -119,7 +125,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     LinearExprWrapper *expr1;
     long constant2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -144,7 +149,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -155,7 +160,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
     IntVarWrapper *var2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -180,7 +184,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -191,7 +195,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
     long constant2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -216,7 +219,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -227,7 +230,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     BoolVarWrapper *var1;
     BoolVarWrapper *var2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -252,7 +254,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -263,7 +265,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
     IntVarWrapper *var2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -288,7 +289,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -299,7 +300,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     BoolVarWrapper *var1;
     BoolVarWrapper *var2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -324,7 +324,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -335,7 +335,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
     long constant2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -360,7 +359,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -371,7 +370,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
     long constant2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -396,7 +394,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -407,7 +405,6 @@ extern "C"
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
     long constant2;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -432,7 +429,7 @@ extern "C"
 
     constraint_wrapper->p = new Constraint(constraint);
 
-    term = enif_make_resource(env, constraint_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
     enif_release_resource(constraint_wrapper);
 
     return term;
@@ -442,7 +439,6 @@ extern "C"
   {
     ConstraintWrapper *constraint_wrapper;
     BoolVarWrapper *var;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CONSTRAINT_WRAPPER, (void **)&constraint_wrapper))
     {
@@ -462,7 +458,6 @@ extern "C"
   ERL_NIF_TERM bool_not_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BoolVarWrapper *var;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], BOOL_VAR_WRAPPER, (void **)&var))
     {
@@ -474,7 +469,7 @@ extern "C"
       return enif_make_badarg(env);
 
     bool_var_wrapper->p = new BoolVar(var->p->Not());
-    term = enif_make_resource(env, bool_var_wrapper);
+    ERL_NIF_TERM term = enif_make_resource(env, bool_var_wrapper);
     enif_release_resource(bool_var_wrapper);
 
     return term;
@@ -483,7 +478,6 @@ extern "C"
   ERL_NIF_TERM solve_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
-    ERL_NIF_TERM term;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
@@ -492,7 +486,39 @@ extern "C"
 
     CpSolverResponse response = Solve(builder_wrapper->p->Build());
 
-    term = make_cp_solver_response(env, response);
+    ERL_NIF_TERM term = make_cp_solver_response(env, response);
+    int64_t status = enif_make_int64(env, response.status());
+
+    return enif_make_tuple2(env, term, status);
+  }
+
+  ERL_NIF_TERM solve_with_callback_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    ErlNifPid pid;
+    enif_get_local_pid(env, argv[1], &pid);
+
+    Model model;
+    SatParameters parameters;
+    parameters.set_search_branching(SatParameters::FIXED_SEARCH);
+    parameters.set_enumerate_all_solutions(true);
+    model.Add(NewSatParameters(parameters));
+    model.Add(NewFeasibleSolutionObserver([&](const CpSolverResponse &r)
+                                          {
+                                            ERL_NIF_TERM term = make_cp_solver_response(env, r);
+                                            int64_t status = enif_make_int64(env, r.status());
+
+                                            enif_send(env, &pid, NULL, enif_make_tuple2(env, term, status));
+                                          }));
+    CpSolverResponse response = SolveCpModel(builder_wrapper->p->Build(), &model);
+
+    ERL_NIF_TERM term = make_cp_solver_response(env, response);
     int64_t status = enif_make_int64(env, response.status());
 
     return enif_make_tuple2(env, term, status);

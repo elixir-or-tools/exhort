@@ -1,5 +1,4 @@
 #include <cstring>
-// #include <string.h>
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
 #include "wrappers.h"
@@ -37,6 +36,7 @@ extern "C"
       {"solution_integer_value_nif", 2, solution_integer_value_nif},
       {"solution_bool_value_nif", 2, solution_bool_value_nif},
       {"solve_nif", 1, solve_nif},
+      {"solve_with_callback_nif", 2, solve_with_callback_nif},
       {"sum_nif", 2, sum_nif}};
 
   ERL_NIF_INIT(Elixir.Nif, nif_funcs, &load, NULL, NULL, NULL)
