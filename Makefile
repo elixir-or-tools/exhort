@@ -1,6 +1,7 @@
 
 all: nifs
 
+
 nifs: priv/lib/nif.so
 
 INCLUDES=-I ~/.asdf/installs/erlang/24.1.7/usr/include
@@ -10,6 +11,7 @@ LIBS=-lortools
 SRC=$(wildcard c_src/*.cc)
 
 priv/lib/nif.so: $(SRC)
+	@mkdir -p $(@D)
 	clang++ $(INCLUDES) $(CFLAGS) $(SOFLAGS) $(LIBS) -o priv/lib/nif.so $(SRC)
 
 clean:
