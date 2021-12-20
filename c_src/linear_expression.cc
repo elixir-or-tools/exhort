@@ -2,6 +2,7 @@
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
 #include "wrappers.h"
+#include "bool_var.h"
 #include "int_var.h"
 
 using operations_research::Domain;
@@ -29,18 +30,11 @@ extern "C"
     return enif_get_resource(env, term, LINEAR_EXPR_WRAPPER, (void **)obj);
   }
 
-  ERL_NIF_TERM sum_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  ERL_NIF_TERM expr_from_int_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     IntVarWrapper *var1;
-    IntVarWrapper *var2;
-    ERL_NIF_TERM term;
 
     if (!get_int_var(env, argv[0], &var1))
-    {
-      return enif_make_badarg(env);
-    }
-
-    if (!get_int_var(env, argv[1], &var2))
     {
       return enif_make_badarg(env);
     }
@@ -49,20 +43,59 @@ extern "C"
     if (linear_expr_wrapper == NULL)
       return enif_make_badarg(env);
 
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::Sum({*var1->p, *var2->p}));
-    term = enif_make_resource(env, linear_expr_wrapper);
+    linear_expr_wrapper->p = new LinearExpr(*var1->p);
+    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 
     return term;
   }
 
-  ERL_NIF_TERM sum_int_var_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  ERL_NIF_TERM expr_from_bool_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
-    IntVarWrapper *var1;
-    LinearExprWrapper *expr2;
-    ERL_NIF_TERM term;
+    BoolVarWrapper *var1;
 
-    if (!get_int_var(env, argv[0], &var1))
+    if (!get_bool_var(env, argv[0], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
+    if (linear_expr_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    linear_expr_wrapper->p = new LinearExpr(*var1->p);
+    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
+    enif_release_resource(linear_expr_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM expr_from_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    long var1;
+
+    if (!enif_get_int64(env, argv[0], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
+    if (linear_expr_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    linear_expr_wrapper->p = new LinearExpr(var1);
+    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
+    enif_release_resource(linear_expr_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM sum_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    LinearExprWrapper *expr1;
+    LinearExprWrapper *expr2;
+
+    if (!get_linear_expression(env, argv[0], &expr1))
     {
       return enif_make_badarg(env);
     }
@@ -76,25 +109,24 @@ extern "C"
     if (linear_expr_wrapper == NULL)
       return enif_make_badarg(env);
 
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr(*var1->p).AddExpression(*expr2->p));
-    term = enif_make_resource(env, linear_expr_wrapper);
+    linear_expr_wrapper->p = new LinearExpr(*expr1->p + *expr2->p);
+    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 
     return term;
   }
 
-  ERL_NIF_TERM sum_int_var_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  ERL_NIF_TERM minus_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
-    IntVarWrapper *var1;
-    long int2;
-    ERL_NIF_TERM term;
+    LinearExprWrapper *expr1;
+    LinearExprWrapper *expr2;
 
-    if (!get_int_var(env, argv[0], &var1))
+    if (!get_linear_expression(env, argv[0], &expr1))
     {
       return enif_make_badarg(env);
     }
 
-    if (!enif_get_long(env, argv[1], &int2))
+    if (!get_linear_expression(env, argv[1], &expr2))
     {
       return enif_make_badarg(env);
     }
@@ -103,42 +135,14 @@ extern "C"
     if (linear_expr_wrapper == NULL)
       return enif_make_badarg(env);
 
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr(*var1->p).AddConstant(int2));
-    term = enif_make_resource(env, linear_expr_wrapper);
+    linear_expr_wrapper->p = new LinearExpr(*expr1->p - *expr2->p);
+    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 
     return term;
   }
 
-  ERL_NIF_TERM minus_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-  {
-    IntVarWrapper *var1;
-    IntVarWrapper *var2;
-    ERL_NIF_TERM term;
-
-    if (!get_int_var(env, argv[0], &var1))
-    {
-      return enif_make_badarg(env);
-    }
-
-    if (!get_int_var(env, argv[1], &var2))
-    {
-      return enif_make_badarg(env);
-    }
-
-    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
-    if (linear_expr_wrapper == NULL)
-      return enif_make_badarg(env);
-
-    const LinearExpr neg_var2 = LinearExpr::Term(*var2->p, -1);
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::ScalProd({*var1->p, *var2->p}, {1, -1}));
-    term = enif_make_resource(env, linear_expr_wrapper);
-    enif_release_resource(linear_expr_wrapper);
-
-    return term;
-  }
-
-  ERL_NIF_TERM prod_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  ERL_NIF_TERM prod_int_var1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     IntVarWrapper *var1;
     int int2;
@@ -158,7 +162,7 @@ extern "C"
     if (linear_expr_wrapper == NULL)
       return enif_make_badarg(env);
 
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::Term(*var1->p, int2));
+    linear_expr_wrapper->p = new LinearExpr(LinearExpr::ScalProd({*var1->p}, {int2}));
     term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 

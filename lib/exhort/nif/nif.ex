@@ -1,6 +1,8 @@
 defmodule Exhort.NIF.Nif do
   @moduledoc """
   Interface to all the NIF implementations.
+
+  What's the best way to add `@spec`s to these functions?
   """
   @on_load :load_nifs
 
@@ -78,13 +80,15 @@ defmodule Exhort.NIF.Nif do
     1
   end
 
-  def sum_nif(_var1, _var2), do: nil
+  def sum_expr1_expr2_nif(_var1, _var2), do: nil
 
-  def sum_int_var_expr_nif(_var1, _expr2), do: nil
+  def minus_expr1_expr2_nif(_expr1, _expr2), do: nil
 
-  def sum_int_var_constant_nif(_var, _constant), do: nil
+  def prod_int_var1_constant2_nif(_var1, _var2), do: nil
 
-  def minus_nif(_var1, _var2), do: nil
+  def expr_from_bool_var_nif(_bool_var), do: nil
 
-  def prod_nif(_var1, _var2), do: nil
+  def expr_from_int_var_nif(_int_var), do: nil
+
+  def expr_from_constant_nif(_constant), do: nil
 end

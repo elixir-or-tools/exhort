@@ -4,6 +4,7 @@
 #include "wrappers.h"
 #include "cp_model_builder.h"
 #include "linear_expression.h"
+#include "bool_var.h"
 #include "int_var.h"
 #include "cp_solver_response.h"
 
@@ -13,6 +14,7 @@ extern "C"
   {
     load_cp_model_builder(env, priv, load_info);
     load_linear_expression(env, priv, load_info);
+    load_bool_var(env, priv, load_info);
     load_int_var(env, priv, load_info);
     load_cp_solver_response(env, priv, load_info);
 
@@ -25,7 +27,6 @@ extern "C"
       {"add_all_different_nif", 2, add_all_different_nif},
       {"add_equal_bool_nif", 3, add_equal_bool_nif},
       {"add_equal_expr_nif", 3, add_equal_expr_nif},
-      // {"add_equal_int_var_plus_int_nif", 3, add_equal_int_var_plus_int_nif},
       {"add_equal_int_constant_nif", 3, add_equal_int_constant_nif},
       {"add_equal_int_nif", 3, add_equal_int_nif},
       {"add_equal_int_expr_nif", 3, add_equal_int_expr_nif},
@@ -42,12 +43,12 @@ extern "C"
       {"solution_integer_value_nif", 2, solution_integer_value_nif},
       {"solve_nif", 1, solve_nif},
       {"solve_with_callback_nif", 2, solve_with_callback_nif},
-      {"prod_nif", 2, prod_nif},
-      {"sum_nif", 2, sum_nif},
-      {"sum_int_var_expr_nif", 2, sum_int_var_expr_nif},
-      {"sum_int_var_constant_nif", 2, sum_int_var_constant_nif},
-      {"minus_nif", 2, minus_nif},
-  };
+      {"prod_int_var1_constant2_nif", 2, prod_int_var1_constant2_nif},
+      {"sum_expr1_expr2_nif", 2, sum_expr1_expr2_nif},
+      {"minus_expr1_expr2_nif", 2, minus_expr1_expr2_nif},
+      {"expr_from_int_var_nif", 1, expr_from_int_var_nif},
+      {"expr_from_bool_var_nif", 1, expr_from_bool_var_nif},
+      {"expr_from_constant_nif", 1, expr_from_constant_nif}};
 
   ERL_NIF_INIT(Elixir.Exhort.NIF.Nif, nif_funcs, &load, NULL, NULL, NULL)
 }

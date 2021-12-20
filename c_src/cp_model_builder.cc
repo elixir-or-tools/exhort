@@ -4,6 +4,7 @@
 #include "ortools/sat/cp_model.h"
 #include "wrappers.h"
 #include "linear_expression.h"
+#include "bool_var.h"
 #include "int_var.h"
 #include "cp_solver_response.h"
 
@@ -27,7 +28,6 @@ using namespace std;
 extern "C"
 {
   ErlNifResourceType *CP_MODEL_BUILDER_WRAPPER;
-  ErlNifResourceType *BOOL_VAR_WRAPPER;
   ErlNifResourceType *CONSTRAINT_WRAPPER;
 
   ERL_NIF_TERM atom_ok;
@@ -35,12 +35,6 @@ extern "C"
   static void free_cp_model_builder(ErlNifEnv *env, void *obj)
   {
     BuilderWrapper *w = (BuilderWrapper *)obj;
-    delete w->p;
-  }
-
-  static void free_bool_var(ErlNifEnv *env, void *obj)
-  {
-    BoolVarWrapper *w = (BoolVarWrapper *)obj;
     delete w->p;
   }
 
@@ -53,8 +47,6 @@ extern "C"
   static int init_types(ErlNifEnv *env)
   {
     CP_MODEL_BUILDER_WRAPPER = enif_open_resource_type(env, NULL, "CpModelBuilderWrapper", free_cp_model_builder, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
-
-    BOOL_VAR_WRAPPER = enif_open_resource_type(env, NULL, "BoolVarWrapper", free_bool_var, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
     CONSTRAINT_WRAPPER = enif_open_resource_type(env, NULL, "ConstraintWrapper", free_constraint, (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL);
 
@@ -89,15 +81,7 @@ extern "C"
 
     BoolVar v = builder_wrapper->p->NewBoolVar().WithName((char *)name.data);
 
-    BoolVarWrapper *bool_var_wrapper = (BoolVarWrapper *)enif_alloc_resource(BOOL_VAR_WRAPPER, sizeof(BoolVarWrapper));
-    if (bool_var_wrapper == NULL)
-      return enif_make_badarg(env);
-
-    bool_var_wrapper->p = new BoolVar(v);
-    ERL_NIF_TERM term = enif_make_resource(env, bool_var_wrapper);
-    enif_release_resource(bool_var_wrapper);
-
-    return term;
+    return make_bool_var(env, v);
   }
 
   ERL_NIF_TERM new_int_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -380,16 +364,20 @@ extern "C"
     {
       return enif_make_badarg(env);
     }
+    cout << "builder" << endl;
 
-    if (!enif_get_resource(env, argv[1], BOOL_VAR_WRAPPER, (void **)&var1))
+    if (!get_bool_var(env, argv[1], &var1))
     {
       return enif_make_badarg(env);
     }
 
-    if (!enif_get_resource(env, argv[2], BOOL_VAR_WRAPPER, (void **)&var2))
+    cout << "b1" << endl;
+
+    if (!get_bool_var(env, argv[2], &var2))
     {
       return enif_make_badarg(env);
     }
+    cout << "b1" << endl;
 
     Constraint constraint = builder_wrapper->p->AddEquality(*var1->p, *var2->p);
 
@@ -451,12 +439,12 @@ extern "C"
       return enif_make_badarg(env);
     }
 
-    if (!enif_get_resource(env, argv[1], BOOL_VAR_WRAPPER, (void **)&var1))
+    if (!get_bool_var(env, argv[1], &var1))
     {
       return enif_make_badarg(env);
     }
 
-    if (!enif_get_resource(env, argv[2], BOOL_VAR_WRAPPER, (void **)&var2))
+    if (!get_bool_var(env, argv[2], &var2))
     {
       return enif_make_badarg(env);
     }
@@ -641,7 +629,7 @@ extern "C"
       return enif_make_badarg(env);
     }
 
-    if (!enif_get_resource(env, argv[1], BOOL_VAR_WRAPPER, (void **)&var))
+    if (!get_bool_var(env, argv[1], &var))
     {
       return enif_make_badarg(env);
     }
@@ -655,20 +643,13 @@ extern "C"
   {
     BoolVarWrapper *var;
 
-    if (!enif_get_resource(env, argv[0], BOOL_VAR_WRAPPER, (void **)&var))
+    if (!get_bool_var(env, argv[0], &var))
     {
       return enif_make_badarg(env);
     }
 
-    BoolVarWrapper *bool_var_wrapper = (BoolVarWrapper *)enif_alloc_resource(BOOL_VAR_WRAPPER, sizeof(BoolVarWrapper));
-    if (bool_var_wrapper == NULL)
-      return enif_make_badarg(env);
-
-    bool_var_wrapper->p = new BoolVar(var->p->Not());
-    ERL_NIF_TERM term = enif_make_resource(env, bool_var_wrapper);
-    enif_release_resource(bool_var_wrapper);
-
-    return term;
+    BoolVar v(var->p->Not());
+    return make_bool_var(env, v);
   }
 
   ERL_NIF_TERM solve_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -730,7 +711,7 @@ extern "C"
       return enif_make_badarg(env);
     }
 
-    if (!enif_get_resource(env, argv[1], BOOL_VAR_WRAPPER, (void **)&var))
+    if (!get_bool_var(env, argv[1], &var))
     {
       return enif_make_badarg(env);
     }
