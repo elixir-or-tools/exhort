@@ -44,6 +44,14 @@ Next, install the or-tools from Homebrew:
 $ brew install or-tools
 ```
 
+If not already present, create a `priv/lib/` directory from the root of the project:
+
+```sh
+$ mkdir -p priv/lib
+```
+
+Then:
+
 ```sh
 $ mix compile
 $ mix test
