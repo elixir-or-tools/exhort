@@ -11,6 +11,7 @@ using operations_research::sat::BoolVar;
 using operations_research::sat::Constraint;
 using operations_research::sat::CpModelBuilder;
 using operations_research::sat::CpSolverResponse;
+using operations_research::sat::IntervalVar;
 using operations_research::sat::IntVar;
 using operations_research::sat::LinearExpr;
 
@@ -30,6 +31,11 @@ extern "C"
   {
     IntVar *p;
   } IntVarWrapper;
+
+  typedef struct
+  {
+    IntervalVar *p;
+  } IntervalVarWrapper;
 
   typedef struct
   {

@@ -2,6 +2,7 @@
 #define __INT_VAR_H__
 
 #include "erl_nif.h"
+#include "wrappers.h"
 
 extern "C"
 {

@@ -9,7 +9,7 @@ defmodule Exhort.SAT.Builder do
   """
 
   @type t :: %__MODULE__{}
-  defstruct res: nil, vars: %{}, constraints: []
+  defstruct res: nil, vars: [], constraints: [], objectives: []
 
   alias __MODULE__
   alias Exhort.NIF.Nif
@@ -17,6 +17,7 @@ defmodule Exhort.SAT.Builder do
   alias Exhort.SAT.Builder
   alias Exhort.SAT.Constraint
   alias Exhort.SAT.IntVar
+  alias Exhort.SAT.IntervalVar
   alias Exhort.SAT.LinearExpression
   alias Exhort.SAT.Model
 
@@ -31,9 +32,9 @@ defmodule Exhort.SAT.Builder do
   @doc """
   Define a boolean variable in the model.
   """
-  @spec def_bool_var(Builder.t(), atom() | String.t()) :: Builder.t()
+  @spec def_bool_var(Builder.t(), name :: atom() | String.t()) :: Builder.t()
   def def_bool_var(%Builder{vars: vars} = builder, var) do
-    %Builder{builder | vars: Map.put(vars, var, %BoolVar{name: var})}
+    %Builder{builder | vars: vars ++ [%BoolVar{name: var}]}
   end
 
   @doc """
@@ -43,10 +44,32 @@ defmodule Exhort.SAT.Builder do
   - `domain` is the uppper and lower bounds of the integer as a tuple,
     `{lower_bound, upper_bound}`
   """
-  @spec def_int_var(Builder.t(), atom() | String.t(), {integer(), integer()}) ::
+  @spec def_int_var(Builder.t(), name :: atom() | String.t(), domain :: {integer(), integer()}) ::
           Builder.t()
   def def_int_var(%Builder{vars: vars} = builder, var, domain) do
-    %Builder{builder | vars: Map.put(vars, var, %IntVar{name: var, domain: domain})}
+    %Builder{builder | vars: vars ++ [%IntVar{name: var, domain: domain}]}
+  end
+
+  @doc """
+  Define an integer variable in the model.
+
+  - `var` is the variable name
+  - `domain` is the uppper and lower bounds of the integer as a tuple,
+    `{lower_bound, upper_bound}`
+  """
+  @spec def_interval_var(
+          Builder.t(),
+          name :: atom() | String.t(),
+          start :: atom() | String.t(),
+          size :: atom() | String.t(),
+          stop :: atom() | String.t()
+        ) ::
+          Builder.t()
+  def def_interval_var(%Builder{vars: vars} = builder, var, start, size, stop) do
+    %Builder{
+      builder
+      | vars: vars ++ [%IntervalVar{name: var, start: start, size: size, stop: stop}]
+    }
   end
 
   @doc """
@@ -72,7 +95,7 @@ defmodule Exhort.SAT.Builder do
           lhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
           constraint :: Constraint.constraint(),
           rhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
-          opts :: {:if, BoolVar.t()} | {:unless, BoolVar.t()}
+          opts :: [{:if, BoolVar.t()}] | [{:unless, BoolVar.t()}]
         ) :: Builder.t()
   def constrain(builder, lhs, constraint, rhs, opts \\ [])
 
@@ -103,6 +126,16 @@ defmodule Exhort.SAT.Builder do
     %Builder{builder | constraints: builder.constraints ++ [{constraint, list}]}
   end
 
+  @spec max_equality(Builder.t(), sym :: atom() | String.t() | IntVar.t(), list()) :: Builder.t()
+  def max_equality(builder, sym, list) do
+    %Builder{builder | objectives: builder.objectives ++ [{:max_equality, sym, list}]}
+  end
+
+  @spec minimize(Builder.t(), sym :: atom() | String.t() | IntVar.t()) :: Builder.t()
+  def minimize(builder, sym) do
+    %Builder{builder | objectives: builder.objectives ++ [{:minimize, sym}]}
+  end
+
   @doc """
   Build the model. Once the model is built it may be solved.
 
@@ -114,16 +147,36 @@ defmodule Exhort.SAT.Builder do
 
     vars =
       builder.vars
-      |> Enum.map(fn
-        {name, %BoolVar{} = var} ->
-          %BoolVar{res: res} = new_bool_var(builder, to_str(name))
-          {name, %BoolVar{var | res: res}}
+      |> Enum.reduce(%{}, fn
+        %BoolVar{name: name} = var, vars ->
+          %BoolVar{res: res} = new_bool_var(builder, name)
+          Map.put(vars, name, %BoolVar{var | res: res})
 
-        {name, %IntVar{domain: {upper_bound, lower_bound}} = var} ->
-          %IntVar{res: res} = new_int_var(builder, upper_bound, lower_bound, to_str(name))
-          {name, %IntVar{var | res: res}}
+        %IntVar{name: name, domain: {upper_bound, lower_bound}} = var, vars ->
+          %IntVar{res: res} = new_int_var(builder, upper_bound, lower_bound, name)
+          Map.put(vars, name, %IntVar{var | res: res})
+
+        %IntervalVar{name: name, start: start, size: size, stop: stop} = var, vars ->
+          start =
+            Map.get(vars, start)
+            |> LinearExpression.resolve(vars)
+
+          size = LinearExpression.resolve(size, vars)
+
+          stop =
+            Map.get(vars, stop)
+            |> LinearExpression.resolve(vars)
+
+          %IntervalVar{res: res} = new_interval_var(builder, name, start, size, stop)
+
+          Map.put(vars, var.name, %IntervalVar{
+            var
+            | res: res,
+              start: start,
+              size: size,
+              stop: stop
+          })
       end)
-      |> Enum.into(%{})
 
     builder = %Builder{builder | vars: vars}
 
@@ -182,6 +235,13 @@ defmodule Exhort.SAT.Builder do
         {lhs, :>=, rhs, :if, literal} ->
           constraint = add_greater_or_equal(builder, Map.get(vars, lhs), rhs)
           only_enforce_if(constraint, Map.get(vars, literal))
+
+        {lhs, :>=, rhs} when is_integer(rhs) ->
+          constraint = add_greater_or_equal(builder, Map.get(vars, lhs), rhs)
+          constraint
+
+        {lhs, :>=, rhs} ->
+          constraint = add_greater_or_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
           constraint
 
         {lhs, :<, rhs, :unless, literal} ->
@@ -194,6 +254,10 @@ defmodule Exhort.SAT.Builder do
           only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
           constraint
 
+        {lhs, :<=, rhs} ->
+          constraint = add_less_or_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
+          constraint
+
         {lhs, :"abs==", rhs} when is_integer(lhs) ->
           add_abs_equal(builder, lhs, Map.get(vars, rhs))
 
@@ -201,15 +265,22 @@ defmodule Exhort.SAT.Builder do
           add_abs_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
 
         {:"all!=", list} ->
-          list
-          |> Enum.map(fn var ->
-            Map.get(vars, var)
-            |> then(& &1.res)
-          end)
-          |> then(fn var_list ->
-            add_all_different(builder, var_list)
-          end)
+          add_all_different(builder, list)
+
+        {:no_overlap, list} ->
+          add_no_overlap(builder, list)
       end)
+
+    builder = %Builder{builder | constraints: constraints}
+
+    builder.objectives
+    |> Enum.map(fn
+      {:max_equality, name, list} ->
+        add_max_equality(builder, Map.get(vars, name), list)
+
+      {:minimize, var1} ->
+        add_minimize(builder, Map.get(vars, var1))
+    end)
 
     %Model{res: builder.res, vars: vars, constraints: constraints}
   end
@@ -218,13 +289,18 @@ defmodule Exhort.SAT.Builder do
   defp to_str(val), do: val
 
   defp new_bool_var(%{res: res} = _cp_model_builder, name) do
-    res = Nif.new_bool_var_nif(res, name)
-    %BoolVar{res: res, name: String.to_atom(name)}
+    res = Nif.new_bool_var_nif(res, to_str(name))
+    %BoolVar{res: res, name: name}
   end
 
   defp new_int_var(%{res: res} = _cp_model_builder, upper_bound, lower_bound, name) do
-    res = Nif.new_int_var_nif(res, upper_bound, lower_bound, name)
-    %IntVar{res: res, name: String.to_atom(name), domain: {upper_bound, lower_bound}}
+    res = Nif.new_int_var_nif(res, upper_bound, lower_bound, to_str(name))
+    %IntVar{res: res, name: name, domain: {upper_bound, lower_bound}}
+  end
+
+  defp new_interval_var(%{res: res} = _cp_model_builder, name, start, size, stop) do
+    res = Nif.new_interval_var_nif(res, to_str(name), start.res, size.res, stop.res)
+    %IntervalVar{res: res, name: name, start: start, size: size, stop: stop}
   end
 
   defp add_equal(cp_model_builder, %LinearExpression{} = expr1, constant2) do
@@ -255,16 +331,24 @@ defmodule Exhort.SAT.Builder do
     Nif.add_not_equal_int_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
-  defp add_greater_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
-    Nif.add_greater_or_equal_nif(cp_model_builder.res, var1.res, int2)
+  defp add_greater_or_equal(cp_model_builder, %IntVar{} = var1, int2) when is_integer(int2) do
+    Nif.add_greater_or_equal_constant_nif(cp_model_builder.res, var1.res, int2)
+  end
+
+  defp add_greater_or_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
+    Nif.add_greater_or_equal_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
   defp add_less(cp_model_builder, %IntVar{} = var1, int2) do
     Nif.add_less_nif(cp_model_builder.res, var1.res, int2)
   end
 
-  defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
-    Nif.add_less_or_equal_nif(cp_model_builder.res, var1.res, int2)
+  defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
+    Nif.add_less_or_equal_nif(cp_model_builder.res, var1.res, var2.res)
+  end
+
+  defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) when is_integer(int2) do
+    Nif.add_less_or_equal_constant_nif(cp_model_builder.res, var1.res, int2)
   end
 
   defp add_abs_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
@@ -275,8 +359,27 @@ defmodule Exhort.SAT.Builder do
     Nif.add_abs_equal_constant_nif(cp_model_builder.res, int1, var2.res)
   end
 
-  defp add_all_different(cp_model_builder, var_list) do
-    Nif.add_all_different_nif(cp_model_builder.res, var_list)
+  defp add_all_different(%Builder{res: builder_res, vars: vars} = _builder, list) do
+    list
+    |> Enum.map(fn var ->
+      Map.get(vars, var)
+      |> then(& &1.res)
+    end)
+    |> then(fn var_list ->
+      Nif.add_all_different_nif(builder_res, var_list)
+    end)
+  end
+
+  defp add_no_overlap(%Builder{res: builder_res, vars: vars} = _builder, list) do
+    list
+    |> Enum.map(fn var ->
+      vars
+      |> Map.get(var)
+      |> then(& &1.res)
+    end)
+    |> then(fn var_list ->
+      Nif.add_no_overlap_nif(builder_res, var_list)
+    end)
   end
 
   defp only_enforce_if(constraint, %BoolVar{} = var) do
@@ -285,5 +388,20 @@ defmodule Exhort.SAT.Builder do
 
   defp bool_not(%BoolVar{} = var) do
     %BoolVar{var | res: Nif.bool_not_nif(var.res)}
+  end
+
+  defp add_max_equality(%Builder{res: builder_res, vars: vars}, %IntVar{} = var1, list) do
+    list
+    |> Enum.map(fn var ->
+      Map.get(vars, var)
+      |> then(& &1.res)
+    end)
+    |> then(fn var_list ->
+      Nif.add_max_equality_nif(builder_res, var1.res, var_list)
+    end)
+  end
+
+  defp add_minimize(%Builder{res: builder_res}, %IntVar{} = var1) do
+    Nif.add_minimize_nif(builder_res, var1.res)
   end
 end

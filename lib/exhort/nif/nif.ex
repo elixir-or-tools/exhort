@@ -20,6 +20,9 @@ defmodule Exhort.NIF.Nif do
   def new_int_var_nif(_cp_model_builder, _upper_bound, _lower_bound, _name) do
   end
 
+  def new_interval_var_nif(_builder, _name, _start, _size, _stop) do
+  end
+
   def add_equal_expr_nif(_cp_model_builder, _var1, _var2) do
   end
 
@@ -44,10 +47,16 @@ defmodule Exhort.NIF.Nif do
   def add_greater_or_equal_nif(_cp_model_builder, _var1, _var2) do
   end
 
+  def add_greater_or_equal_constant_nif(_cp_model_builder, _var1, _int2) do
+  end
+
   def add_less_nif(_cp_model_builder, _var1, _var2) do
   end
 
   def add_less_or_equal_nif(_cp_model_builder, _var1, _var2) do
+  end
+
+  def add_less_or_equal_constant_nif(_cp_model_builder, _var1, _int2) do
   end
 
   def only_enforce_if_nif(_constraint, _var) do
@@ -58,6 +67,8 @@ defmodule Exhort.NIF.Nif do
   def add_abs_equal_constant_nif(_builder, _var1, _constant2), do: nil
 
   def add_all_different_nif(_builder, _var_list), do: nil
+
+  def add_no_overlap_nif(_builder, _var_list), do: nil
 
   def bool_not_nif(_var) do
   end
@@ -91,4 +102,8 @@ defmodule Exhort.NIF.Nif do
   def expr_from_int_var_nif(_int_var), do: nil
 
   def expr_from_constant_nif(_constant), do: nil
+
+  def add_max_equality_nif(_builder_res, _name, _var_list), do: nil
+
+  def add_minimize_nif(_builder_res, _name), do: nil
 end

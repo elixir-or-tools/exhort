@@ -6,6 +6,7 @@
 #include "linear_expression.h"
 #include "bool_var.h"
 #include "int_var.h"
+#include "interval_var.h"
 #include "cp_solver_response.h"
 
 extern "C"
@@ -16,6 +17,7 @@ extern "C"
     load_linear_expression(env, priv, load_info);
     load_bool_var(env, priv, load_info);
     load_int_var(env, priv, load_info);
+    load_interval_var(env, priv, load_info);
     load_cp_solver_response(env, priv, load_info);
 
     return 0;
@@ -25,20 +27,26 @@ extern "C"
       {"add_abs_equal_nif", 3, add_abs_equal_nif},
       {"add_abs_equal_constant_nif", 3, add_abs_equal_constant_nif},
       {"add_all_different_nif", 2, add_all_different_nif},
+      {"add_no_overlap_nif", 2, add_no_overlap_nif},
       {"add_equal_bool_nif", 3, add_equal_bool_nif},
       {"add_equal_expr_nif", 3, add_equal_expr_nif},
       {"add_equal_int_constant_nif", 3, add_equal_int_constant_nif},
       {"add_equal_int_nif", 3, add_equal_int_nif},
       {"add_equal_int_expr_nif", 3, add_equal_int_expr_nif},
       {"add_greater_or_equal_nif", 3, add_greater_or_equal_nif},
+      {"add_greater_or_equal_constant_nif", 3, add_greater_or_equal_constant_nif},
       {"add_less_nif", 3, add_less_nif},
+      {"add_max_equality_nif", 3, add_max_equality_nif},
+      {"add_minimize_nif", 2, add_minimize_nif},
       {"add_less_or_equal_nif", 3, add_less_or_equal_nif},
+      {"add_less_or_equal_constant_nif", 3, add_less_or_equal_constant_nif},
       {"add_not_equal_bool_nif", 3, add_not_equal_bool_nif},
       {"add_not_equal_int_nif", 3, add_not_equal_int_nif},
       {"bool_not_nif", 1, bool_not_nif},
       {"new_bool_var_nif", 2, new_bool_var_nif},
       {"new_builder_nif", 0, new_builder_nif},
       {"new_int_var_nif", 4, new_int_var_nif},
+      {"new_interval_var_nif", 5, new_interval_var_nif},
       {"only_enforce_if_nif", 2, only_enforce_if_nif},
       {"solution_bool_value_nif", 2, solution_bool_value_nif},
       {"solution_integer_value_nif", 2, solution_integer_value_nif},

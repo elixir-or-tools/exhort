@@ -6,6 +6,7 @@
 #include "linear_expression.h"
 #include "bool_var.h"
 #include "int_var.h"
+#include "interval_var.h"
 #include "cp_solver_response.h"
 
 #include "ortools/sat/model.h"
@@ -102,6 +103,41 @@ extern "C"
     IntVar v = builder_wrapper->p->NewIntVar(domain).WithName((char *)name.data);
 
     return make_int_var(env, v);
+  }
+
+  ERL_NIF_TERM new_interval_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    LinearExprWrapper *var1;
+    LinearExprWrapper *var2;
+    LinearExprWrapper *var3;
+    ErlNifBinary name;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    enif_inspect_iolist_as_binary(env, argv[1], &name);
+
+    if (!get_linear_expression(env, argv[2], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[3], &var2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[4], &var3))
+    {
+      return enif_make_badarg(env);
+    }
+
+    IntervalVar v = builder_wrapper->p->NewIntervalVar(*var1->p, *var2->p, *var3->p).WithName((char *)name.data);
+
+    return make_interval_var(env, v);
   }
 
   ERL_NIF_TERM add_abs_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -466,6 +502,41 @@ extern "C"
   {
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
+    IntVarWrapper *var2;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_int_var(env, argv[1], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_int_var(env, argv[2], &var2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddGreaterOrEqual(*var1->p, *var2->p);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM add_greater_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    IntVarWrapper *var1;
     long constant2;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
@@ -533,6 +604,41 @@ extern "C"
   }
 
   ERL_NIF_TERM add_less_or_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    IntVarWrapper *var1;
+    IntVarWrapper *var2;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_int_var(env, argv[1], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_int_var(env, argv[2], &var2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddLessOrEqual(*var1->p, *var2->p);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM add_less_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
     IntVarWrapper *var1;
@@ -616,6 +722,134 @@ extern "C"
     enif_release_resource(constraint_wrapper);
 
     return term;
+  }
+
+  ERL_NIF_TERM add_no_overlap_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    unsigned int list_length;
+    if (!enif_get_list_length(env, argv[1], &list_length))
+    {
+      return enif_make_badarg(env);
+    }
+
+    std::vector<IntervalVar> vars;
+    ERL_NIF_TERM head;
+    ERL_NIF_TERM tail;
+    ERL_NIF_TERM current = argv[1];
+    for (int i = 0; i < list_length; ++i)
+    {
+      if (!enif_get_list_cell(env, current, &head, &tail))
+      {
+        return enif_make_badarg(env);
+      }
+
+      IntervalVarWrapper *var;
+      if (!get_interval_var(env, head, &var))
+      {
+        return enif_make_badarg(env);
+      }
+
+      vars.push_back(*var->p);
+
+      current = tail;
+    }
+
+    Constraint constraint = builder_wrapper->p->AddNoOverlap(vars);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM add_max_equality_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    IntVarWrapper *var1;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_int_var(env, argv[1], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    unsigned int list_length;
+    if (!enif_get_list_length(env, argv[2], &list_length))
+    {
+      return enif_make_badarg(env);
+    }
+
+    std::vector<IntVar> vars;
+    ERL_NIF_TERM head;
+    ERL_NIF_TERM tail;
+    ERL_NIF_TERM current = argv[2];
+    for (int i = 0; i < list_length; ++i)
+    {
+      if (!enif_get_list_cell(env, current, &head, &tail))
+      {
+        return enif_make_badarg(env);
+      }
+
+      IntVarWrapper *var;
+      if (!get_int_var(env, head, &var))
+      {
+        return enif_make_badarg(env);
+      }
+
+      vars.push_back(*var->p);
+
+      current = tail;
+    }
+
+    Constraint constraint = builder_wrapper->p->AddMaxEquality(*var1->p, vars);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM add_minimize_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    IntVarWrapper *var1;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_int_var(env, argv[1], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    builder_wrapper->p->Minimize(*var1->p);
+
+    return argv[0];
   }
 
   ERL_NIF_TERM only_enforce_if_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
