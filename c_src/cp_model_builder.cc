@@ -142,26 +142,25 @@ extern "C"
   ERL_NIF_TERM add_abs_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
-    IntVarWrapper *var1;
-    long int2;
+    long int1;
+    IntVarWrapper *var2;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
       return enif_make_badarg(env);
     }
 
-    if (!get_int_var(env, argv[1], &var1))
+    if (!enif_get_long(env, argv[1], &int1))
     {
       return enif_make_badarg(env);
     }
 
-    if (!enif_get_long(env, argv[2], &int2))
+    if (!get_int_var(env, argv[2], &var2))
     {
       return enif_make_badarg(env);
     }
 
-    IntVar var2 = builder_wrapper->p->NewIntVar(Domain(int2));
-    Constraint constraint = builder_wrapper->p->AddAbsEquality(*var1->p, var2);
+    Constraint constraint = builder_wrapper->p->AddAbsEquality(int1, *var2->p);
 
     ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
     if (constraint_wrapper == NULL)

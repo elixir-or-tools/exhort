@@ -215,14 +215,14 @@ defmodule Exhort.SAT.BuilderTest do
         "diff_fox_chesterfields",
         LinearExpression.minus("fox", "chesterfields")
       )
-      |> Builder.constrain(:"abs==", "diff_fox_chesterfields", 1)
+      |> Builder.constrain(:"abs==", 1, "diff_fox_chesterfields")
       |> Builder.def_int_var("diff_horse_kools", {-4, 4})
       |> Builder.constrain(
         :==,
         "diff_horse_kools",
         LinearExpression.minus("horse", "kools")
       )
-      |> Builder.constrain(:"abs==", "diff_horse_kools", 1)
+      |> Builder.constrain(:"abs==", 1, "diff_horse_kools")
       |> Builder.constrain(:==, "lucky strike", "fruit juice")
       |> Builder.constrain(:==, "japanese", "parliaments")
       |> Builder.def_int_var("diff_norwegian_blue", {-4, 4})
@@ -231,9 +231,7 @@ defmodule Exhort.SAT.BuilderTest do
         "diff_norwegian_blue",
         LinearExpression.minus("norwegian", "blue")
       )
-
-    # This causes an infeasible result
-    # |> Builder.constrain(:"abs==", "diff_norwegian_blue", 1)
+      |> Builder.constrain(:"abs==", 1, "diff_norwegian_blue")
 
     # Solve and print out the solution.
     response =

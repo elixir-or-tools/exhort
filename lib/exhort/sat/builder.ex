@@ -232,8 +232,8 @@ defmodule Exhort.SAT.Builder do
           only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
           constraint
 
-        {:"abs==", atom1, int2} when is_integer(int2) ->
-          add_abs_equal(builder, Map.get(vars, atom1), int2)
+        {:"abs==", int1, sym2} when is_integer(int1) ->
+          add_abs_equal(builder, int1, Map.get(vars, sym2))
 
         {:"abs==", atom1, atom2} ->
           add_abs_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
@@ -309,8 +309,8 @@ defmodule Exhort.SAT.Builder do
     Nif.add_abs_equal_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
-  defp add_abs_equal(cp_model_builder, %IntVar{} = var1, int2) when is_integer(int2) do
-    Nif.add_abs_equal_constant_nif(cp_model_builder.res, var1.res, int2)
+  defp add_abs_equal(cp_model_builder, int1, %IntVar{} = var2) when is_integer(int1) do
+    Nif.add_abs_equal_constant_nif(cp_model_builder.res, int1, var2.res)
   end
 
   defp add_all_different(cp_model_builder, var_list) do
