@@ -9,7 +9,8 @@ defmodule Exhort.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       compilers: [:elixir_make] ++ Mix.compilers(),
-      make_args: ["--quiet"]
+      make_args: ["--quiet"],
+      make_clean: ["clean"]
     ]
   end
 
