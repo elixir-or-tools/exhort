@@ -52,11 +52,20 @@ defmodule Exhort.SAT.Builder do
   @doc """
   Define a constraint on the model using variables.
 
-  - `constraint` is specified as an atom. See `Exhort.SAT.Constraint.constraint()`.
-  - `var1` and `var2` may be an atom, a string, or an existing `BoolVar` or `IntVar`.
+  - `constraint` is specified as an atom. See
+    `Exhort.SAT.Constraint.constraint()`.
+  - `var1` and `var2` may be an atom, a string, or an existing `BoolVar` or
+    `IntVar`.
   - `opts` may specify a restriction on the constraint:
-      - `if: bool` specifies that a constraint only takes effect if `bool` is true
-      - `unless: bool` specifies that a constraint only takes effect if `bool` is false
+      - `if: bool` specifies that a constraint only takes effect if `bool` is
+        true
+      - `unless: bool` specifies that a constraint only takes effect if `bool`
+        is false
+
+  - `:==` - `var1 == var2`
+  - `:abs==` - `var1 == abs(var2)`
+  - `:"all!="` - Require each element the provide list has a different value
+    from all the rest
   """
   @spec constrain(
           Builder.t(),
