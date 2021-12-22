@@ -44,12 +44,6 @@ Next, install the or-tools from Homebrew:
 $ brew install or-tools
 ```
 
-If not already present, create a `priv/lib/` directory from the root of the project:
-
-```sh
-$ mkdir -p priv/lib
-```
-
 Then:
 
 ```sh
@@ -78,10 +72,10 @@ The result of the `build` function is a `Model`.
       |> Builder.def_int_var(:x, {0, 10})
       |> Builder.def_int_var(:y, {0, 10})
       |> Builder.def_bool_var(:b)
-      |> Builder.constrain(:>=, :x, 5, if: :b)
-      |> Builder.constrain(:<=, :x, 5, unless: :b)
-      |> Builder.constrain(:==, LinearExpression.sum(:x, :y), 10, if: :b)
-      |> Builder.constrain(:==, :y, 0, unless: :b)
+      |> Builder.constrain(:x, :>=, 5, if: :b)
+      |> Builder.constrain(:x, :<=, 5, unless: :b)
+      |> Builder.constrain(LinearExpression.sum(:x, :y), :==, 10, if: :b)
+      |> Builder.constrain(:y, :==, 0, unless: :b)
 
     {response, acc} =
       builder

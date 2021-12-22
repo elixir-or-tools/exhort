@@ -54,12 +54,12 @@ defmodule Exhort.SAT.Builder do
 
   - `constraint` is specified as an atom. See
     `Exhort.SAT.Constraint.constraint()`.
-  - `var1` and `var2` may be an atom, a string, or an existing `BoolVar` or
-    `IntVar`.
+  - `lhs` and `rhs` may each either be an atom, string, `LinearExpression`,
+    or an existing `BoolVar` or `IntVar`.
   - `opts` may specify a restriction on the constraint:
-      - `if: bool` specifies that a constraint only takes effect if `bool` is
+      - `if: BoolVar` specifies that a constraint only takes effect if `BoolVar` is
         true
-      - `unless: bool` specifies that a constraint only takes effect if `bool`
+      - `unless: BoolVar` specifies that a constraint only takes effect if `BoolVar`
         is false
 
   - `:==` - `var1 == var2`
@@ -68,78 +68,32 @@ defmodule Exhort.SAT.Builder do
     from all the rest
   """
   @spec constrain(
-          Builder.t(),
-          Constraint.constraint(),
-          atom() | String.t() | BoolVar.t() | IntVar.t(),
-          atom() | String.t() | BoolVar.t() | IntVar.t(),
-          Keyword.t()
+          builder :: Builder.t(),
+          lhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
+          constraint :: Constraint.constraint(),
+          rhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
+          opts :: {:if, BoolVar.t()} | {:unless, BoolVar.t()}
         ) :: Builder.t()
-  def constrain(builder, constraint, var1, var2, opts \\ [])
+  def constrain(builder, lhs, constraint, rhs, opts \\ [])
 
-  def constrain(%Builder{} = builder, constraint, %BoolVar{} = var1, %BoolVar{} = var2, opts) do
+  def constrain(%Builder{} = builder, lhs, constraint, rhs, opts) do
     cond do
       opts == [] ->
         %Builder{
           builder
-          | constraints: builder.constraints ++ [{constraint, var1.name, var2.name}]
+          | constraints: builder.constraints ++ [{lhs, constraint, rhs}]
         }
 
-      var3 = Keyword.get(opts, :if) ->
+      literal = Keyword.get(opts, :if) ->
         %Builder{
           builder
-          | constraints:
-              builder.constraints ++ [{constraint, var1.name, var2.name, :if, var3.name}]
+          | constraints: builder.constraints ++ [{lhs, constraint, rhs, :if, literal}]
         }
 
-      var3 = Keyword.get(opts, :unless) ->
+      literal = Keyword.get(opts, :unless) ->
         %Builder{
           builder
-          | constraints:
-              builder.constraints ++ [{constraint, var1.name, var2.name, :unless, var3.name}]
-        }
-    end
-  end
-
-  def constrain(%Builder{} = builder, constraint, %IntVar{} = var1, %IntVar{} = var2, opts) do
-    cond do
-      opts == [] ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{constraint, var1, var2}]
-        }
-
-      var3 = Keyword.get(opts, :if) ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{constraint, var1, var2, :if, var3}]
-        }
-
-      var3 = Keyword.get(opts, :unless) ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{constraint, var1, var2, :unless, var3}]
-        }
-    end
-  end
-
-  def constrain(%Builder{} = builder, constraint, atom1, atom2, opts) do
-    cond do
-      opts == [] ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{constraint, atom1, atom2}]
-        }
-
-      atom3 = Keyword.get(opts, :if) ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{constraint, atom1, atom2, :if, atom3}]
-        }
-
-      atom3 = Keyword.get(opts, :unless) ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{constraint, atom1, atom2, :unless, atom3}]
+          | constraints: builder.constraints ++ [{lhs, constraint, rhs, :unless, literal}]
         }
     end
   end
@@ -176,76 +130,75 @@ defmodule Exhort.SAT.Builder do
     constraints =
       builder.constraints
       |> Enum.map(fn
-        {:==, atom1, %LinearExpression{} = expr2} ->
-          var1 = Map.get(vars, atom1)
-          expr2 = LinearExpression.resolve(expr2, vars)
-          add_equal(builder, var1, expr2)
+        {lhs, :==, %LinearExpression{} = rhs} ->
+          rhs = LinearExpression.resolve(rhs, vars)
+          add_equal(builder, Map.get(vars, lhs), rhs)
 
-        {:==, %LinearExpression{} = expr, int3, :if, atom4} ->
-          expr = LinearExpression.resolve(expr, vars)
-          constraint = add_equal(builder, expr, int3)
-          only_enforce_if(constraint, Map.get(vars, atom4))
+        {%LinearExpression{} = lhs, :==, rhs, :if, literal} ->
+          lhs = LinearExpression.resolve(lhs, vars)
+          constraint = add_equal(builder, lhs, rhs)
+          only_enforce_if(constraint, Map.get(vars, literal))
           constraint
 
-        {:==, atom1, int2, :if, atom3} when is_integer(int2) ->
-          constraint = add_equal(builder, Map.get(vars, atom1), int2)
-          only_enforce_if(constraint, Map.get(vars, atom3))
+        {lhs, :==, rhs, :if, literal} when is_integer(rhs) ->
+          constraint = add_equal(builder, Map.get(vars, lhs), rhs)
+          only_enforce_if(constraint, Map.get(vars, literal))
           constraint
 
-        {:==, atom1, int2, :unless, atom3} when is_integer(int2) ->
-          constraint = add_equal(builder, Map.get(vars, atom1), int2)
-          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+        {lhs, :==, rhs, :unless, literal} when is_integer(rhs) ->
+          constraint = add_equal(builder, Map.get(vars, lhs), rhs)
+          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
           constraint
 
-        {:==, atom1, int2} when is_integer(int2) ->
-          add_equal(builder, Map.get(vars, atom1), int2)
+        {lhs, :==, rhs} when is_integer(rhs) ->
+          add_equal(builder, Map.get(vars, lhs), rhs)
 
-        {:==, atom1, atom2, :if, atom3} ->
-          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-          only_enforce_if(constraint, Map.get(vars, atom3))
+        {lhs, :==, rhs, :if, literal} ->
+          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
+          only_enforce_if(constraint, Map.get(vars, literal))
           constraint
 
-        {:==, atom1, atom2, :unless, atom3} ->
-          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+        {lhs, :==, rhs, :unless, literal} ->
+          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
+          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
           constraint
 
-        {:==, atom1, atom2} ->
-          add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+        {lhs, :==, rhs} ->
+          add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
 
-        {:!=, atom1, atom2} ->
-          add_not_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+        {lhs, :!=, rhs} ->
+          add_not_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
 
-        {:!=, atom1, atom2, :if, atom3} ->
-          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-          only_enforce_if(constraint, Map.get(vars, atom3))
+        {lhs, :!=, rhs, :if, literal} ->
+          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
+          only_enforce_if(constraint, Map.get(vars, literal))
           constraint
 
-        {:!=, atom1, atom2, :unless, atom3} ->
-          constraint = add_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
-          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+        {lhs, :!=, rhs, :unless, literal} ->
+          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
+          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
           constraint
 
-        {:>=, atom1, int2, :if, atom3} ->
-          constraint = add_greater_or_equal(builder, Map.get(vars, atom1), int2)
-          only_enforce_if(constraint, Map.get(vars, atom3))
+        {lhs, :>=, rhs, :if, literal} ->
+          constraint = add_greater_or_equal(builder, Map.get(vars, lhs), rhs)
+          only_enforce_if(constraint, Map.get(vars, literal))
           constraint
 
-        {:<, atom1, int2, :unless, atom3} ->
-          constraint = add_less(builder, Map.get(vars, atom1), int2)
-          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+        {lhs, :<, rhs, :unless, literal} ->
+          constraint = add_less(builder, Map.get(vars, lhs), rhs)
+          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
           constraint
 
-        {:<=, atom1, int2, :unless, atom3} ->
-          constraint = add_less_or_equal(builder, Map.get(vars, atom1), int2)
-          only_enforce_if(constraint, bool_not(Map.get(vars, atom3)))
+        {lhs, :<=, rhs, :unless, literal} ->
+          constraint = add_less_or_equal(builder, Map.get(vars, lhs), rhs)
+          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
           constraint
 
-        {:"abs==", int1, sym2} when is_integer(int1) ->
-          add_abs_equal(builder, int1, Map.get(vars, sym2))
+        {lhs, :"abs==", rhs} when is_integer(lhs) ->
+          add_abs_equal(builder, lhs, Map.get(vars, rhs))
 
-        {:"abs==", atom1, atom2} ->
-          add_abs_equal(builder, Map.get(vars, atom1), Map.get(vars, atom2))
+        {lhs, :"abs==", rhs} ->
+          add_abs_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
 
         {:"all!=", list} ->
           list

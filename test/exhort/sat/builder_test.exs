@@ -22,7 +22,7 @@ defmodule Exhort.SAT.BuilderTest do
       |> Builder.def_int_var("x", {0, 2})
       |> Builder.def_int_var("y", {0, 2})
 
-    assert Builder.constrain(model, :==, "x", "y")
+    assert Builder.constrain(model, "x", :==, "y")
   end
 
   test "not equal" do
@@ -31,7 +31,7 @@ defmodule Exhort.SAT.BuilderTest do
       |> Builder.def_int_var("x", {0, 2})
       |> Builder.def_int_var("y", {0, 2})
 
-    assert Builder.constrain(model, :!=, :x, :y)
+    assert Builder.constrain(model, :x, :!=, :y)
   end
 
   test "solve" do
@@ -39,7 +39,7 @@ defmodule Exhort.SAT.BuilderTest do
       Builder.new()
       |> Builder.def_int_var("x", {0, 2})
       |> Builder.def_int_var("y", {0, 2})
-      |> Builder.constrain(:!=, "x", "y")
+      |> Builder.constrain("x", :!=, "y")
       |> Builder.build()
 
     assert %SolverResponse{} = Model.solve(model)
@@ -51,7 +51,7 @@ defmodule Exhort.SAT.BuilderTest do
       |> Builder.def_int_var("x", {0, 2})
       |> Builder.def_int_var("y", {0, 2})
       |> Builder.def_int_var("z", {0, 2})
-      |> Builder.constrain(:!=, "x", "y")
+      |> Builder.constrain("x", :!=, "y")
       |> Builder.build()
 
     response = Model.solve(model)
@@ -64,7 +64,7 @@ defmodule Exhort.SAT.BuilderTest do
       |> Builder.def_int_var("x", {0, 2})
       |> Builder.def_int_var("y", {0, 2})
       |> Builder.def_int_var("z", {0, 2})
-      |> Builder.constrain(:!=, "x", "y")
+      |> Builder.constrain("x", :!=, "y")
       |> Builder.build()
 
     response = Model.solve(model)
@@ -80,7 +80,7 @@ defmodule Exhort.SAT.BuilderTest do
       |> Builder.def_int_var(:x, {0, 2})
       |> Builder.def_int_var(:y, {0, 2})
       |> Builder.def_int_var(:z, {0, 2})
-      |> Builder.constrain(:!=, :x, :y)
+      |> Builder.constrain(:x, :!=, :y)
 
     # Interacting with the underlying CP Model
     response =
@@ -98,7 +98,7 @@ defmodule Exhort.SAT.BuilderTest do
       Builder.new()
       |> Builder.def_bool_var("x")
       |> Builder.def_bool_var("y")
-      |> Builder.constrain(:!=, "x", "y")
+      |> Builder.constrain("x", :!=, "y")
 
     # Interacting with the underlying CP Model
     response =
@@ -116,7 +116,7 @@ defmodule Exhort.SAT.BuilderTest do
       Builder.new()
       |> Builder.def_bool_var(:x)
       |> Builder.def_bool_var(:y)
-      |> Builder.constrain(:!=, :x, :y)
+      |> Builder.constrain(:x, :!=, :y)
 
     # Interacting with the underlying CP Model
     response =
@@ -135,10 +135,10 @@ defmodule Exhort.SAT.BuilderTest do
       |> Builder.def_int_var(:x, {0, 10})
       |> Builder.def_int_var(:y, {0, 10})
       |> Builder.def_bool_var(:b)
-      |> Builder.constrain(:>=, :x, 5, if: :b)
-      |> Builder.constrain(:<=, :x, 5, unless: :b)
-      |> Builder.constrain(:==, LinearExpression.sum(:x, :y), 10, if: :b)
-      |> Builder.constrain(:==, :y, 0, unless: :b)
+      |> Builder.constrain(:x, :>=, 5, if: :b)
+      |> Builder.constrain(:x, :<=, 5, unless: :b)
+      |> Builder.constrain(LinearExpression.sum(:x, :y), :==, 10, if: :b)
+      |> Builder.constrain(:y, :==, 0, unless: :b)
 
     {response, acc} =
       builder
@@ -200,38 +200,38 @@ defmodule Exhort.SAT.BuilderTest do
         "lucky strike",
         "old gold"
       ])
-      |> Builder.constrain(:==, "englishman", "red")
-      |> Builder.constrain(:==, "spaniard", "dog")
-      |> Builder.constrain(:==, "coffee", "green")
-      |> Builder.constrain(:==, "ukrainian", "tea")
-      |> Builder.constrain(:==, "green", LinearExpression.sum("ivory", 1))
-      |> Builder.constrain(:==, "old gold", "snails")
-      |> Builder.constrain(:==, "kools", "yellow")
-      |> Builder.constrain(:==, "milk", 3)
-      |> Builder.constrain(:==, "norwegian", 1)
+      |> Builder.constrain("englishman", :==, "red")
+      |> Builder.constrain("spaniard", :==, "dog")
+      |> Builder.constrain("coffee", :==, "green")
+      |> Builder.constrain("ukrainian", :==, "tea")
+      |> Builder.constrain("green", :==, LinearExpression.sum("ivory", 1))
+      |> Builder.constrain("old gold", :==, "snails")
+      |> Builder.constrain("kools", :==, "yellow")
+      |> Builder.constrain("milk", :==, 3)
+      |> Builder.constrain("norwegian", :==, 1)
       |> Builder.def_int_var("diff_fox_chesterfields", {-4, 4})
       |> Builder.constrain(
-        :==,
         "diff_fox_chesterfields",
+        :==,
         LinearExpression.minus("fox", "chesterfields")
       )
-      |> Builder.constrain(:"abs==", 1, "diff_fox_chesterfields")
+      |> Builder.constrain(1, :"abs==", "diff_fox_chesterfields")
       |> Builder.def_int_var("diff_horse_kools", {-4, 4})
       |> Builder.constrain(
-        :==,
         "diff_horse_kools",
+        :==,
         LinearExpression.minus("horse", "kools")
       )
-      |> Builder.constrain(:"abs==", 1, "diff_horse_kools")
-      |> Builder.constrain(:==, "lucky strike", "fruit juice")
-      |> Builder.constrain(:==, "japanese", "parliaments")
+      |> Builder.constrain(1, :"abs==", "diff_horse_kools")
+      |> Builder.constrain("lucky strike", :==, "fruit juice")
+      |> Builder.constrain("japanese", :==, "parliaments")
       |> Builder.def_int_var("diff_norwegian_blue", {-4, 4})
       |> Builder.constrain(
-        :==,
         "diff_norwegian_blue",
+        :==,
         LinearExpression.minus("norwegian", "blue")
       )
-      |> Builder.constrain(:"abs==", 1, "diff_norwegian_blue")
+      |> Builder.constrain(1, :"abs==", "diff_norwegian_blue")
 
     # Solve and print out the solution.
     response =
