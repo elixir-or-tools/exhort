@@ -136,7 +136,7 @@ defmodule Exhort.SAT.BuilderTest do
       |> Builder.def_int_var(:y, {0, 10})
       |> Builder.def_bool_var(:b)
       |> Builder.constrain(:x, :>=, 5, if: :b)
-      |> Builder.constrain(:x, :<=, 5, unless: :b)
+      |> Builder.constrain(:x, :<, 5, unless: :b)
       |> Builder.constrain(LinearExpression.sum(:x, :y), :==, 10, if: :b)
       |> Builder.constrain(:y, :==, 0, unless: :b)
 
@@ -152,7 +152,7 @@ defmodule Exhort.SAT.BuilderTest do
     assert 10 == SolverResponse.int_val(response, :x)
     assert 0 == SolverResponse.int_val(response, :y)
     assert SolverResponse.bool_val(response, :b)
-    assert 2 == acc
+    assert 11 == acc
   end
 
   test "zebra" do
