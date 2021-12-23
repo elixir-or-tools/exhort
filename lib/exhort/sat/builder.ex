@@ -264,7 +264,7 @@ defmodule Exhort.SAT.Builder do
   end
 
   defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) do
-    Nif.add_greater_or_equal_nif(cp_model_builder.res, var1.res, int2)
+    Nif.add_less_or_equal_nif(cp_model_builder.res, var1.res, int2)
   end
 
   defp add_abs_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
