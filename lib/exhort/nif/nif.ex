@@ -76,6 +76,14 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
+  def add_lin_expr_less_or_equal_constant_nif(_cp_model_builder, _var1, _int2) do
+    unimplemented().on_unimplemented()
+  end
+
+  def add_constant_less_or_equal_lin_expr_nif(_cp_model_builder, _var1, _int2) do
+    unimplemented().on_unimplemented()
+  end
+
   def only_enforce_if_nif(_constraint, _var) do
     unimplemented().on_unimplemented()
   end
@@ -123,6 +131,10 @@ defmodule Exhort.NIF.Nif do
   end
 
   def sum_expr1_expr2_nif(_var1, _var2) do
+    unimplemented().on_unimplemented()
+  end
+
+  def sum_exprs_nif(_vars) do
     unimplemented().on_unimplemented()
   end
 

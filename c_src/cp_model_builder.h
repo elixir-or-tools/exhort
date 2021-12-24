@@ -49,6 +49,10 @@ extern "C"
 
   ERL_NIF_TERM add_less_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
+  ERL_NIF_TERM add_lin_expr_less_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
+  ERL_NIF_TERM add_constant_less_or_equal_lin_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
   ERL_NIF_TERM only_enforce_if_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM bool_not_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);

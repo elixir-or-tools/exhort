@@ -673,6 +673,76 @@ extern "C"
     return term;
   }
 
+  ERL_NIF_TERM add_lin_expr_less_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    LinearExprWrapper *var1;
+    long constant2;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[1], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int64(env, argv[2], &constant2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddLessOrEqual(*var1->p, constant2);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM add_constant_less_or_equal_lin_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    long constant1;
+    LinearExprWrapper *var2;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int64(env, argv[1], &constant1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[2], &var2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddLessOrEqual(constant1, *var2->p);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
   ERL_NIF_TERM add_all_different_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
