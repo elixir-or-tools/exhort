@@ -187,6 +187,10 @@ defmodule Exhort.SAT.Builder do
           rhs = LinearExpression.resolve(rhs, vars)
           add_equal(builder, Map.get(vars, lhs), rhs)
 
+        {%LinearExpression{} = lhs, :==, rhs} ->
+          lhs = LinearExpression.resolve(lhs, vars)
+          add_equal(builder, lhs, rhs)
+
         {%LinearExpression{} = lhs, :==, rhs, :if, literal} ->
           lhs = LinearExpression.resolve(lhs, vars)
           constraint = add_equal(builder, lhs, rhs)
@@ -253,6 +257,14 @@ defmodule Exhort.SAT.Builder do
           constraint = add_less_or_equal(builder, Map.get(vars, lhs), rhs)
           only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
           constraint
+
+        {%LinearExpression{} = lhs, :<=, rhs} ->
+          lhs = LinearExpression.resolve(lhs, vars)
+          add_less_or_equal(builder, lhs, rhs)
+
+        {lhs, :<=, %LinearExpression{} = rhs} ->
+          rhs = LinearExpression.resolve(rhs, vars)
+          add_less_or_equal(builder, lhs, rhs)
 
         {lhs, :<=, rhs} ->
           constraint = add_less_or_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
@@ -349,6 +361,16 @@ defmodule Exhort.SAT.Builder do
 
   defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) when is_integer(int2) do
     Nif.add_less_or_equal_constant_nif(cp_model_builder.res, var1.res, int2)
+  end
+
+  defp add_less_or_equal(cp_model_builder, %LinearExpression{} = expr1, int2)
+       when is_integer(int2) do
+    Nif.add_lin_expr_less_or_equal_constant_nif(cp_model_builder.res, expr1.res, int2)
+  end
+
+  defp add_less_or_equal(cp_model_builder, int1, %LinearExpression{} = expr2)
+       when is_integer(int1) do
+    Nif.add_constant_less_or_equal_lin_expr_nif(cp_model_builder.res, int1, expr2.res)
   end
 
   defp add_abs_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do

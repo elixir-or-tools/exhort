@@ -25,6 +25,21 @@ defmodule Exhort.SAT.LinearExpression do
   def resolve(
         %LinearExpression{
           res: nil,
+          expr: {:sum, expr_list}
+        } = expr,
+        vars
+      )
+      when is_list(expr_list) do
+    expr_list
+    |> Enum.map(&resolve(&1, vars).res)
+    |> List.to_tuple()
+    |> Nif.sum_exprs_nif()
+    |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr_list}})
+  end
+
+  def resolve(
+        %LinearExpression{
+          res: nil,
           expr: {:sum, %LinearExpression{} = expr1, %LinearExpression{} = expr2}
         } = expr,
         vars
@@ -145,6 +160,14 @@ defmodule Exhort.SAT.LinearExpression do
 
   def resolve(val, vars) when is_atom(val) or is_binary(val) do
     Map.get(vars, val)
+  end
+
+  @doc """
+  Create a linear expression as the sum of the list of provided variables.
+  """
+  @spec sum([eterm()]) :: LinearExpression.t()
+  def sum(vars) when is_list(vars) do
+    %LinearExpression{expr: {:sum, vars}}
   end
 
   @doc """

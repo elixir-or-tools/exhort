@@ -116,6 +116,36 @@ extern "C"
     return term;
   }
 
+  ERL_NIF_TERM sum_exprs_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    const ERL_NIF_TERM *vars;
+    int arity;
+
+    if (!enif_get_tuple(env, argv[0], &arity, &vars))
+    {
+      return enif_make_badarg(env);
+    }
+
+    std::vector<BoolVar> bool_vars(arity);
+    for (int i = 0; i < arity; i++)
+    {
+      BoolVarWrapper *bvw;
+      get_bool_var(env, vars[i], &bvw);
+      BoolVar bv = *bvw->p;
+      bool_vars.push_back(bv);
+    }
+
+    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
+    if (linear_expr_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    linear_expr_wrapper->p = new LinearExpr(LinearExpr::Sum(absl::Span<const BoolVar> (bool_vars)));
+    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
+    enif_release_resource(linear_expr_wrapper);
+
+    return term;
+  }
+
   ERL_NIF_TERM minus_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     LinearExprWrapper *expr1;
