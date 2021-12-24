@@ -1,4 +1,4 @@
-defmodule Samples.CpIsFun do
+defmodule Samples.Exhort.SAT.CpIsFun do
   use ExUnit.Case
 
   alias Exhort.SAT.Builder
@@ -7,10 +7,10 @@ defmodule Samples.CpIsFun do
   alias Exhort.SAT.Model
 
   test "CP is fun" do
-    kBase = 10
+    base = 10
 
-    digit = {0, kBase - 1}
-    non_zero_digit = {1, kBase - 1}
+    digit = {0, base - 1}
+    non_zero_digit = {1, base - 1}
 
     builder =
       Builder.new()
@@ -30,18 +30,18 @@ defmodule Samples.CpIsFun do
       |> Builder.constrain(
         LinearExpression.prod(
           ["c", "p", "i", "s", "f", "u", "n"],
-          [kBase, 1, kBase, 1, kBase * kBase, kBase, 1]
+          [base, 1, base, 1, base * base, base, 1]
         ),
         :==,
         LinearExpression.prod(["t", "r", "u", "e"], [
-          kBase * kBase * kBase,
-          kBase * kBase,
-          kBase,
+          base * base * base,
+          base * base,
+          base,
           1
         ])
       )
 
-    solution_callback = fn response, acc ->
+    solution_callback = fn %SolverResponse{} = _response, acc ->
       # IO.write("C=#{SolverResponse.int_val(response, "c")} ")
       # IO.write("P=#{SolverResponse.int_val(response, "p")} ")
       # IO.write("I=#{SolverResponse.int_val(response, "i")} ")
