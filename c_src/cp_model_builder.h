@@ -25,7 +25,9 @@ extern "C"
 
   ERL_NIF_TERM add_equal_int_var_plus_int_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-  ERL_NIF_TERM add_equal_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+  ERL_NIF_TERM add_equal_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
+  ERL_NIF_TERM add_equal_expr1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM add_equal_int_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 

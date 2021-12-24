@@ -183,6 +183,11 @@ defmodule Exhort.SAT.Builder do
     constraints =
       builder.constraints
       |> Enum.map(fn
+        {%LinearExpression{} = lhs, :==, %LinearExpression{} = rhs} ->
+          lhs = LinearExpression.resolve(lhs, vars)
+          rhs = LinearExpression.resolve(rhs, vars)
+          add_equal(builder, lhs, rhs)
+
         {lhs, :==, %LinearExpression{} = rhs} ->
           rhs = LinearExpression.resolve(rhs, vars)
           add_equal(builder, Map.get(vars, lhs), rhs)
@@ -315,8 +320,12 @@ defmodule Exhort.SAT.Builder do
     %IntervalVar{res: res, name: name, start: start, size: size, stop: stop}
   end
 
+  defp add_equal(cp_model_builder, %LinearExpression{} = expr1, %LinearExpression{} = expr2) do
+    Nif.add_equal_expr1_expr2_nif(cp_model_builder.res, expr1.res, expr2.res)
+  end
+
   defp add_equal(cp_model_builder, %LinearExpression{} = expr1, constant2) do
-    Nif.add_equal_expr_nif(cp_model_builder.res, expr1.res, constant2)
+    Nif.add_equal_expr1_constant2_nif(cp_model_builder.res, expr1.res, constant2)
   end
 
   defp add_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do

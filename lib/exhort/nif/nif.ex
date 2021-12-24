@@ -28,7 +28,11 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
-  def add_equal_expr_nif(_cp_model_builder, _var1, _var2) do
+  def add_equal_expr1_expr2_nif(_cp_model_builder, _expr1, _expr2) do
+    unimplemented().on_unimplemented()
+  end
+
+  def add_equal_expr1_constant2_nif(_cp_model_builder, _var1, _int2) do
     unimplemented().on_unimplemented()
   end
 
@@ -143,6 +147,10 @@ defmodule Exhort.NIF.Nif do
   end
 
   def prod_int_var1_constant2_nif(_var1, _var2) do
+    unimplemented().on_unimplemented()
+  end
+
+  def prod_list1_list2_nif(_list1, _list2) do
     unimplemented().on_unimplemented()
   end
 

@@ -52,6 +52,46 @@ defmodule Exhort.SAT.LinearExpression do
   end
 
   def resolve(
+        %LinearExpression{res: nil, expr: {:prod, %IntVar{} = var1, int2}} = expr,
+        _vars
+      )
+      when is_integer(int2) do
+    Nif.prod_int_var1_constant2_nif(var1.res, int2)
+    |> then(&%LinearExpression{expr | res: &1})
+  end
+
+  def resolve(
+        %LinearExpression{res: nil, expr: {:prod, list1, list2}} = expr,
+        vars
+      )
+      when is_list(list1) and is_list(list2) do
+    {
+      list1
+      |> Enum.map(&Map.get(vars, &1))
+      |> Enum.map(& &1.res),
+      list2
+    }
+    |> then(fn {list1, list2} ->
+      Nif.prod_list1_list2_nif(list1, list2)
+    end)
+    |> then(&%LinearExpression{expr | res: &1})
+  end
+
+  def resolve(%LinearExpression{res: nil, expr: {:prod, sym1, int2}} = expr, vars)
+      when not is_integer(sym1) and is_integer(int2) do
+    var1 = Map.get(vars, sym1)
+
+    resolve(%LinearExpression{expr | expr: {:prod, var1, int2}}, vars)
+  end
+
+  def resolve(%LinearExpression{res: nil, expr: {:prod, int1, sym2}} = expr, vars)
+      when is_integer(int1) and not is_integer(sym2) do
+    var2 = Map.get(vars, sym2)
+
+    resolve(%LinearExpression{expr | expr: {:prod, var2, int1}}, vars)
+  end
+
+  def resolve(
         %LinearExpression{
           res: nil,
           expr: {:minus, %LinearExpression{} = expr1, %LinearExpression{} = expr2}
@@ -116,28 +156,6 @@ defmodule Exhort.SAT.LinearExpression do
     resolve(%LinearExpression{expr | expr: {opr, expr1, expr2}}, vars)
   end
 
-  def resolve(
-        %LinearExpression{res: nil, expr: {:prod, %IntVar{} = var1, int2}} = expr,
-        _vars
-      ) do
-    Nif.prod_int_var1_constant2_nif(var1.res, int2)
-    |> then(&%LinearExpression{expr | res: &1})
-  end
-
-  def resolve(%LinearExpression{res: nil, expr: {:prod, sym1, int2}} = expr, vars)
-      when not is_integer(sym1) and is_integer(int2) do
-    var1 = Map.get(vars, sym1)
-
-    resolve(%LinearExpression{expr | expr: {:prod, var1, int2}}, vars)
-  end
-
-  def resolve(%LinearExpression{res: nil, expr: {:prod, int1, sym2}} = expr, vars)
-      when is_integer(int1) and not is_integer(sym2) do
-    var2 = Map.get(vars, sym2)
-
-    resolve(%LinearExpression{expr | expr: {:prod, var2, int1}}, vars)
-  end
-
   def resolve(%LinearExpression{} = expr, _vars), do: expr
 
   def resolve(%BoolVar{} = var, _vars) do
@@ -187,9 +205,10 @@ defmodule Exhort.SAT.LinearExpression do
   end
 
   @doc """
-  Create a linear expression as the product of `var1` and `val2`.
+  Create a linear expression as the product of `val1` and `val2`.
   """
-  @spec prod(IntVar.t() | integer(), IntVar.t() | integer()) :: LinearExpression.t()
+  @spec prod(IntVar.t() | integer() | list(), IntVar.t() | integer() | list()) ::
+          LinearExpression.t()
   def prod(val1, val2) do
     %LinearExpression{expr: {:prod, val1, val2}}
   end

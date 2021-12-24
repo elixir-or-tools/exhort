@@ -210,7 +210,42 @@ extern "C"
     return term;
   }
 
-  ERL_NIF_TERM add_equal_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  ERL_NIF_TERM add_equal_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    LinearExprWrapper *expr1;
+    LinearExprWrapper *expr2;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[1], &expr1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[2], &expr2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    Constraint constraint = builder_wrapper->p->AddEquality(*expr1->p, *expr2->p);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM add_equal_expr1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
     LinearExprWrapper *expr1;
@@ -371,8 +406,6 @@ extern "C"
       return enif_make_badarg(env);
     }
 
-    // Constraint constraint = builder_wrapper->p->AddEquality(*var1->p, constant2);
-    // IntVar x;
     Domain d(1, 1);
     IntVar var2 = builder_wrapper->p->NewIntVar(d);
     Constraint constraint = builder_wrapper->p->AddEquality(*var1->p, LinearExpr::Sum({*var1->p, var2}));
@@ -399,21 +432,16 @@ extern "C"
     {
       return enif_make_badarg(env);
     }
-    cout << "builder" << endl;
 
     if (!get_bool_var(env, argv[1], &var1))
     {
       return enif_make_badarg(env);
     }
 
-    cout << "b1" << endl;
-
     if (!get_bool_var(env, argv[2], &var2))
     {
       return enif_make_badarg(env);
     }
-    cout << "b1" << endl;
-
     Constraint constraint = builder_wrapper->p->AddEquality(*var1->p, *var2->p);
 
     ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
@@ -762,7 +790,7 @@ extern "C"
     ERL_NIF_TERM head;
     ERL_NIF_TERM tail;
     ERL_NIF_TERM current = argv[1];
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < list_length; ++i)
     {
       if (!enif_get_list_cell(env, current, &head, &tail))
       {

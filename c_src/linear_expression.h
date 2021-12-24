@@ -10,6 +10,8 @@ extern "C"
 
   ERL_NIF_TERM prod_int_var1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
+  ERL_NIF_TERM prod_list1_list2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
   ERL_NIF_TERM sum_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM sum_exprs_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
