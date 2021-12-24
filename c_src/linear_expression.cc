@@ -129,10 +129,12 @@ extern "C"
     std::vector<BoolVar> bool_vars(arity);
     for (int i = 0; i < arity; i++)
     {
-      BoolVarWrapper *bvw;
-      get_bool_var(env, vars[i], &bvw);
-      BoolVar bv = *bvw->p;
-      bool_vars.push_back(bv);
+      BoolVarWrapper *bool_var_wrapper;
+      if (!get_bool_var(env, vars[i], &bool_var_wrapper))
+      {
+        return enif_make_badarg(env);
+      }
+      bool_vars.push_back(*bool_var_wrapper->p);
     }
 
     LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
