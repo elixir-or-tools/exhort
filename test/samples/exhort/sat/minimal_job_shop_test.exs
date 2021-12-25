@@ -94,7 +94,7 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
       all_machines
       |> Enum.reduce(builder, fn machine, builder ->
         builder
-        |> Builder.constrain(:no_overlap, machine_to_intervals[machine])
+        |> Builder.constrain_list(:no_overlap, machine_to_intervals[machine])
       end)
 
     builder =

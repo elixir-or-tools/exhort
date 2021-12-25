@@ -36,7 +36,7 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
-  def add_equal_bool_nif(_cp_model_builder, _var1, _var2) do
+  def add_not_equal_expr1_expr2_nif(_cp_model_builder, _expr1, _expr2) do
     unimplemented().on_unimplemented()
   end
 
@@ -48,43 +48,19 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
-  def add_equal_int_constant_nif(_cp_model_builder, _var1, _var2) do
+  def add_less_than_expr1_expr2_nif(_cp_model_builder, _expr1, _expr2) do
     unimplemented().on_unimplemented()
   end
 
-  def add_equal_int_expr_nif(_cp_model_builder, _var1, _expr2) do
+  def add_less_or_equal_expr1_expr2_nif(_cp_model_builder, _expr1, _expr2) do
     unimplemented().on_unimplemented()
   end
 
-  def add_not_equal_int_nif(_cp_model_builder, _var1, _var2) do
+  def add_greater_or_equal_expr1_expr2_nif(_cp_model_builder, _expr1, _expr2) do
     unimplemented().on_unimplemented()
   end
 
-  def add_greater_or_equal_nif(_cp_model_builder, _var1, _var2) do
-    unimplemented().on_unimplemented()
-  end
-
-  def add_greater_or_equal_constant_nif(_cp_model_builder, _var1, _int2) do
-    unimplemented().on_unimplemented()
-  end
-
-  def add_less_nif(_cp_model_builder, _var1, _var2) do
-    unimplemented().on_unimplemented()
-  end
-
-  def add_less_or_equal_nif(_cp_model_builder, _var1, _var2) do
-    unimplemented().on_unimplemented()
-  end
-
-  def add_less_or_equal_constant_nif(_cp_model_builder, _var1, _int2) do
-    unimplemented().on_unimplemented()
-  end
-
-  def add_lin_expr_less_or_equal_constant_nif(_cp_model_builder, _var1, _int2) do
-    unimplemented().on_unimplemented()
-  end
-
-  def add_constant_less_or_equal_lin_expr_nif(_cp_model_builder, _var1, _int2) do
+  def add_greater_than_expr1_expr2_nif(_cp_model_builder, _expr1, _expr2) do
     unimplemented().on_unimplemented()
   end
 

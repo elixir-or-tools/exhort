@@ -24,7 +24,7 @@ defmodule Samples.Exhort.SAT.CpIsFun do
       |> Builder.def_int_var("t", non_zero_digit)
       |> Builder.def_int_var("r", digit)
       |> Builder.def_int_var("e", digit)
-      |> Builder.constrain(:"all!=", ["c", "p", "i", "s", "f", "u", "n", "t", "r", "e"])
+      |> Builder.constrain_list(:"all!=", ["c", "p", "i", "s", "f", "u", "n", "t", "r", "e"])
 
       # CP + IS + FUN = TRUE
       |> Builder.constrain(
