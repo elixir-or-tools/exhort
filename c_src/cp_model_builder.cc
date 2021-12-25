@@ -741,6 +741,26 @@ extern "C"
     return argv[0];
   }
 
+  ERL_NIF_TERM add_maximize_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    LinearExprWrapper *expr1;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[1], &expr1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    builder_wrapper->p->Maximize(*expr1->p);
+
+    return argv[0];
+  }
+
   ERL_NIF_TERM only_enforce_if_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     ConstraintWrapper *constraint_wrapper;

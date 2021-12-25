@@ -15,6 +15,7 @@ defmodule Exhort.SAT.LinearExpression do
   alias Exhort.NIF.Nif
   alias Exhort.SAT.BoolVar
   alias Exhort.SAT.IntVar
+  alias Exhort.SAT.Vars
 
   @type eterm :: atom() | String.t() | LinearExpression.t()
 
@@ -31,10 +32,20 @@ defmodule Exhort.SAT.LinearExpression do
       )
       when is_list(expr_list) do
     expr_list
-    |> Enum.map(&Map.get(vars, &1))
-    |> Enum.map(& &1.res)
-    |> List.to_tuple()
-    |> Nif.sum_exprs_nif()
+    |> Enum.map(&Vars.get(vars, &1))
+    |> then(fn
+      [%IntVar{} | _] = vars ->
+        vars
+        |> Enum.map(& &1.res)
+        |> List.to_tuple()
+        |> Nif.sum_int_vars_nif()
+
+      [%BoolVar{} | _] = vars ->
+        vars
+        |> Enum.map(& &1.res)
+        |> List.to_tuple()
+        |> Nif.sum_bool_vars_nif()
+    end)
     |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr_list}})
   end
 
@@ -68,7 +79,7 @@ defmodule Exhort.SAT.LinearExpression do
       when is_list(list1) and is_list(list2) do
     {
       list1
-      |> Enum.map(&Map.get(vars, &1))
+      |> Enum.map(&Vars.get(vars, &1))
       |> Enum.map(& &1.res),
       list2
     }
@@ -80,14 +91,14 @@ defmodule Exhort.SAT.LinearExpression do
 
   def resolve(%LinearExpression{res: nil, expr: {:prod, sym1, int2}} = expr, vars)
       when not is_integer(sym1) and is_integer(int2) do
-    var1 = Map.get(vars, sym1)
+    var1 = Vars.get(vars, sym1)
 
     resolve(%LinearExpression{expr | expr: {:prod, var1, int2}}, vars)
   end
 
   def resolve(%LinearExpression{res: nil, expr: {:prod, int1, sym2}} = expr, vars)
       when is_integer(int1) and not is_integer(sym2) do
-    var2 = Map.get(vars, sym2)
+    var2 = Vars.get(vars, sym2)
 
     resolve(%LinearExpression{expr | expr: {:prod, var2, int1}}, vars)
   end
@@ -179,7 +190,7 @@ defmodule Exhort.SAT.LinearExpression do
 
   def resolve(val, vars) when is_atom(val) or is_binary(val) do
     vars
-    |> Map.get(val)
+    |> Vars.get(val)
     |> resolve(vars)
   end
 

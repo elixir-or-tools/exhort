@@ -58,6 +58,8 @@ extern "C"
   ERL_NIF_TERM add_max_equality_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM add_minimize_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
+  ERL_NIF_TERM add_maximize_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 }
 
 #endif

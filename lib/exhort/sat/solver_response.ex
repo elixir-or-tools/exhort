@@ -12,6 +12,7 @@ defmodule Exhort.SAT.SolverResponse do
   alias Exhort.NIF.Nif
   alias Exhort.SAT.IntVar
   alias Exhort.SAT.Model
+  alias Exhort.SAT.Vars
 
   @spec build({any(), integer()}, Model.t()) :: SolverResponse.t()
   def build({res, int_status}, model) do
@@ -32,7 +33,7 @@ defmodule Exhort.SAT.SolverResponse do
     do: nil
 
   def bool_val(%{model: %{vars: vars}} = response, atom) do
-    var = Map.get(vars, atom)
+    var = Vars.get(vars, atom)
     Nif.solution_bool_value_nif(response.res, var.res) == 1
   end
 
@@ -44,7 +45,7 @@ defmodule Exhort.SAT.SolverResponse do
   end
 
   def int_val(%SolverResponse{model: %{vars: vars}} = response, atom) do
-    %IntVar{res: var_res} = Map.get(vars, atom)
+    %IntVar{res: var_res} = Vars.get(vars, atom)
     Nif.solution_integer_value_nif(response.res, var_res)
   end
 end

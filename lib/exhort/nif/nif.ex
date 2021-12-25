@@ -114,7 +114,11 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
-  def sum_exprs_nif(_vars) do
+  def sum_int_vars_nif(_vars) do
+    unimplemented().on_unimplemented()
+  end
+
+  def sum_bool_vars_nif(_vars) do
     unimplemented().on_unimplemented()
   end
 
@@ -147,6 +151,10 @@ defmodule Exhort.NIF.Nif do
   end
 
   def add_minimize_nif(_builder_res, _name) do
+    unimplemented().on_unimplemented()
+  end
+
+  def add_maximize_nif(_builder_res, _name) do
     unimplemented().on_unimplemented()
   end
 
