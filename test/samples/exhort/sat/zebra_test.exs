@@ -34,17 +34,17 @@ defmodule Samples.Exhort.SAT.Zebra do
       |> Builder.def_int_var("chesterfields", {1, 5})
       |> Builder.def_int_var("lucky strike", {1, 5})
       |> Builder.def_int_var("parliaments", {1, 5})
-      |> Builder.constrain(:"all!=", ["red", "green", "yellow", "blue", "ivory"])
-      |> Builder.constrain(:"all!=", [
+      |> Builder.constrain_list(:"all!=", ["red", "green", "yellow", "blue", "ivory"])
+      |> Builder.constrain_list(:"all!=", [
         "englishman",
         "spaniard",
         "japanese",
         "ukrainian",
         "norwegian"
       ])
-      |> Builder.constrain(:"all!=", ["dog", "snails", "fox", "zebra", "horse"])
-      |> Builder.constrain(:"all!=", ["tea", "coffee", "water", "milk", "fruit juice"])
-      |> Builder.constrain(:"all!=", [
+      |> Builder.constrain_list(:"all!=", ["dog", "snails", "fox", "zebra", "horse"])
+      |> Builder.constrain_list(:"all!=", ["tea", "coffee", "water", "milk", "fruit juice"])
+      |> Builder.constrain_list(:"all!=", [
         "parliaments",
         "kools",
         "chesterfields",

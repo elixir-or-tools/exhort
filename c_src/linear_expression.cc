@@ -203,7 +203,7 @@ extern "C"
       return enif_make_badarg(env);
     }
 
-    std::vector<BoolVar> bool_vars(arity);
+    std::vector<BoolVar> bool_vars;
     for (int i = 0; i < arity; i++)
     {
       BoolVarWrapper *bool_var_wrapper;
@@ -218,7 +218,7 @@ extern "C"
     if (linear_expr_wrapper == NULL)
       return enif_make_badarg(env);
 
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::Sum(absl::Span<const BoolVar> (bool_vars)));
+    linear_expr_wrapper->p = new LinearExpr(LinearExpr::Sum(bool_vars));
     ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 

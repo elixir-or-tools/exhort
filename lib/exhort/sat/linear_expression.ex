@@ -31,7 +31,8 @@ defmodule Exhort.SAT.LinearExpression do
       )
       when is_list(expr_list) do
     expr_list
-    |> Enum.map(&resolve(&1, vars).res)
+    |> Enum.map(&Map.get(vars, &1))
+    |> Enum.map(& &1.res)
     |> List.to_tuple()
     |> Nif.sum_exprs_nif()
     |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr_list}})
@@ -177,7 +178,9 @@ defmodule Exhort.SAT.LinearExpression do
   end
 
   def resolve(val, vars) when is_atom(val) or is_binary(val) do
-    Map.get(vars, val)
+    vars
+    |> Map.get(val)
+    |> resolve(vars)
   end
 
   @doc """

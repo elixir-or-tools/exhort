@@ -31,29 +31,17 @@ extern "C"
 
   ERL_NIF_TERM add_equal_int_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-  ERL_NIF_TERM add_equal_int_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-  ERL_NIF_TERM add_equal_int_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-  ERL_NIF_TERM add_equal_bool_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-  ERL_NIF_TERM add_not_equal_int_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+  ERL_NIF_TERM add_not_equal_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM add_not_equal_bool_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-  ERL_NIF_TERM add_greater_or_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+  ERL_NIF_TERM add_greater_or_equal_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-  ERL_NIF_TERM add_greater_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+  ERL_NIF_TERM add_greater_than_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-  ERL_NIF_TERM add_less_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+  ERL_NIF_TERM add_less_than_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-  ERL_NIF_TERM add_less_or_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-  ERL_NIF_TERM add_less_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-  ERL_NIF_TERM add_lin_expr_less_or_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-  ERL_NIF_TERM add_constant_less_or_equal_lin_expr_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+  ERL_NIF_TERM add_less_or_equal_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM only_enforce_if_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 

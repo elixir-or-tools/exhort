@@ -100,30 +100,16 @@ defmodule Exhort.SAT.Builder do
   def constrain(builder, lhs, constraint, rhs, opts \\ [])
 
   def constrain(%Builder{} = builder, lhs, constraint, rhs, opts) do
-    cond do
-      opts == [] ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{lhs, constraint, rhs}]
-        }
-
-      literal = Keyword.get(opts, :if) ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{lhs, constraint, rhs, :if, literal}]
-        }
-
-      literal = Keyword.get(opts, :unless) ->
-        %Builder{
-          builder
-          | constraints: builder.constraints ++ [{lhs, constraint, rhs, :unless, literal}]
-        }
-    end
+    %Builder{
+      builder
+      | constraints: builder.constraints ++ [{lhs, constraint, rhs, opts}]
+    }
   end
 
-  @spec constrain(Builder.t(), Constraint.constraint(), list()) :: Builder.t()
-  def constrain(%Builder{} = builder, constraint, list) do
-    %Builder{builder | constraints: builder.constraints ++ [{constraint, list}]}
+  @spec constrain_list(Builder.t(), Constraint.constraint(), list(), opts :: Keyword.t()) ::
+          Builder.t()
+  def constrain_list(%Builder{} = builder, constraint, list, opts \\ []) do
+    %Builder{builder | constraints: builder.constraints ++ [{constraint, list, opts}]}
   end
 
   @spec max_equality(Builder.t(), sym :: atom() | String.t() | IntVar.t(), list()) :: Builder.t()
@@ -183,109 +169,47 @@ defmodule Exhort.SAT.Builder do
     constraints =
       builder.constraints
       |> Enum.map(fn
-        {%LinearExpression{} = lhs, :==, %LinearExpression{} = rhs} ->
+        {lhs, :==, rhs, opts} ->
           lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          add_equal(builder, lhs, rhs)
+          builder |> add_equal(lhs, rhs) |> modify(opts, vars)
 
-        {lhs, :==, %LinearExpression{} = rhs} ->
+        {lhs, :!=, rhs, opts} ->
+          lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          add_equal(builder, Map.get(vars, lhs), rhs)
+          builder |> add_not_equal(lhs, rhs) |> modify(opts, vars)
 
-        {%LinearExpression{} = lhs, :==, rhs} ->
+        {lhs, :>, rhs, opts} ->
           lhs = LinearExpression.resolve(lhs, vars)
-          add_equal(builder, lhs, rhs)
-
-        {%LinearExpression{} = lhs, :==, rhs, :if, literal} ->
-          lhs = LinearExpression.resolve(lhs, vars)
-          constraint = add_equal(builder, lhs, rhs)
-          only_enforce_if(constraint, Map.get(vars, literal))
-          constraint
-
-        {lhs, :==, rhs, :if, literal} when is_integer(rhs) ->
-          constraint = add_equal(builder, Map.get(vars, lhs), rhs)
-          only_enforce_if(constraint, Map.get(vars, literal))
-          constraint
-
-        {lhs, :==, rhs, :unless, literal} when is_integer(rhs) ->
-          constraint = add_equal(builder, Map.get(vars, lhs), rhs)
-          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
-          constraint
-
-        {lhs, :==, rhs} when is_integer(rhs) ->
-          add_equal(builder, Map.get(vars, lhs), rhs)
-
-        {lhs, :==, rhs, :if, literal} ->
-          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-          only_enforce_if(constraint, Map.get(vars, literal))
-          constraint
-
-        {lhs, :==, rhs, :unless, literal} ->
-          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
-          constraint
-
-        {lhs, :==, rhs} ->
-          add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-
-        {lhs, :!=, rhs} ->
-          add_not_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-
-        {lhs, :!=, rhs, :if, literal} ->
-          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-          only_enforce_if(constraint, Map.get(vars, literal))
-          constraint
-
-        {lhs, :!=, rhs, :unless, literal} ->
-          constraint = add_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
-          constraint
-
-        {lhs, :>=, rhs, :if, literal} ->
-          constraint = add_greater_or_equal(builder, Map.get(vars, lhs), rhs)
-          only_enforce_if(constraint, Map.get(vars, literal))
-
-        {lhs, :>=, rhs} when is_integer(rhs) ->
-          constraint = add_greater_or_equal(builder, Map.get(vars, lhs), rhs)
-          constraint
-
-        {lhs, :>=, rhs} ->
-          constraint = add_greater_or_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-          constraint
-
-        {lhs, :<, rhs, :unless, literal} ->
-          constraint = add_less(builder, Map.get(vars, lhs), rhs)
-          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
-          constraint
-
-        {lhs, :<=, rhs, :unless, literal} ->
-          constraint = add_less_or_equal(builder, Map.get(vars, lhs), rhs)
-          only_enforce_if(constraint, bool_not(Map.get(vars, literal)))
-          constraint
-
-        {%LinearExpression{} = lhs, :<=, rhs} ->
-          lhs = LinearExpression.resolve(lhs, vars)
-          add_less_or_equal(builder, lhs, rhs)
-
-        {lhs, :<=, %LinearExpression{} = rhs} ->
           rhs = LinearExpression.resolve(rhs, vars)
-          add_less_or_equal(builder, lhs, rhs)
+          builder |> add_greater_than(lhs, rhs) |> modify(opts, vars)
 
-        {lhs, :<=, rhs} ->
-          constraint = add_less_or_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
-          constraint
+        {lhs, :>=, rhs, opts} ->
+          lhs = LinearExpression.resolve(lhs, vars)
+          rhs = LinearExpression.resolve(rhs, vars)
+          builder |> add_greater_or_equal(lhs, rhs) |> modify(opts, vars)
 
-        {lhs, :"abs==", rhs} when is_integer(lhs) ->
-          add_abs_equal(builder, lhs, Map.get(vars, rhs))
+        {lhs, :<, rhs, opts} ->
+          lhs = LinearExpression.resolve(lhs, vars)
+          rhs = LinearExpression.resolve(rhs, vars)
+          builder |> add_less_than(lhs, rhs) |> modify(opts, vars)
 
-        {lhs, :"abs==", rhs} ->
-          add_abs_equal(builder, Map.get(vars, lhs), Map.get(vars, rhs))
+        {lhs, :<=, rhs, opts} ->
+          lhs = LinearExpression.resolve(lhs, vars)
+          rhs = LinearExpression.resolve(rhs, vars)
+          builder |> add_less_or_equal(lhs, rhs) |> modify(opts, vars)
 
-        {:"all!=", list} ->
-          add_all_different(builder, list)
+        {lhs, :"abs==", rhs, opts} when is_integer(lhs) ->
+          builder |> add_abs_equal(lhs, Map.get(vars, rhs)) |> modify(opts, vars)
 
-        {:no_overlap, list} ->
-          add_no_overlap(builder, list)
+        {lhs, :"abs==", rhs, opts} ->
+          builder |> add_abs_equal(Map.get(vars, lhs), Map.get(vars, rhs)) |> modify(opts, vars)
+
+        {:"all!=", list, opts} ->
+          builder |> add_all_different(list) |> modify(opts, vars)
+
+        {:no_overlap, list, opts} ->
+          builder |> add_no_overlap(list) |> modify(opts, vars)
       end)
 
     builder = %Builder{builder | constraints: constraints}
@@ -324,62 +248,36 @@ defmodule Exhort.SAT.Builder do
     Nif.add_equal_expr1_expr2_nif(cp_model_builder.res, expr1.res, expr2.res)
   end
 
-  defp add_equal(cp_model_builder, %LinearExpression{} = expr1, constant2) do
-    Nif.add_equal_expr1_constant2_nif(cp_model_builder.res, expr1.res, constant2)
+  defp add_not_equal(cp_model_builder, %LinearExpression{} = expr1, %LinearExpression{} = expr2) do
+    Nif.add_not_equal_expr1_expr2_nif(cp_model_builder.res, expr1.res, expr2.res)
   end
 
-  defp add_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
-    Nif.add_equal_bool_nif(cp_model_builder.res, var1.res, var2.res)
+  defp add_greater_or_equal(
+         cp_model_builder,
+         %LinearExpression{} = expr1,
+         %LinearExpression{} = expr2
+       ) do
+    Nif.add_greater_or_equal_expr1_expr2_nif(cp_model_builder.res, expr1.res, expr2.res)
   end
 
-  defp add_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
-    Nif.add_equal_int_nif(cp_model_builder.res, var1.res, var2.res)
+  defp add_greater_than(
+         cp_model_builder,
+         %LinearExpression{} = expr1,
+         %LinearExpression{} = expr2
+       ) do
+    Nif.add_greater_than_expr1_expr2_nif(cp_model_builder.res, expr1.res, expr2.res)
   end
 
-  defp add_equal(cp_model_builder, %IntVar{} = var1, %LinearExpression{} = expr2) do
-    Nif.add_equal_int_expr_nif(cp_model_builder.res, var1.res, expr2.res)
+  defp add_less_than(cp_model_builder, %LinearExpression{} = expr1, %LinearExpression{} = expr2) do
+    Nif.add_less_than_expr1_expr2_nif(cp_model_builder.res, expr1.res, expr2.res)
   end
 
-  defp add_equal(cp_model_builder, %IntVar{} = var1, int2) when is_integer(int2) do
-    Nif.add_equal_int_constant_nif(cp_model_builder.res, var1.res, int2)
-  end
-
-  defp add_not_equal(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
-    Nif.add_not_equal_bool_nif(cp_model_builder.res, var1.res, var2.res)
-  end
-
-  defp add_not_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
-    Nif.add_not_equal_int_nif(cp_model_builder.res, var1.res, var2.res)
-  end
-
-  defp add_greater_or_equal(cp_model_builder, %IntVar{} = var1, int2) when is_integer(int2) do
-    Nif.add_greater_or_equal_constant_nif(cp_model_builder.res, var1.res, int2)
-  end
-
-  defp add_greater_or_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
-    Nif.add_greater_or_equal_nif(cp_model_builder.res, var1.res, var2.res)
-  end
-
-  defp add_less(cp_model_builder, %IntVar{} = var1, int2) do
-    Nif.add_less_nif(cp_model_builder.res, var1.res, int2)
-  end
-
-  defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
-    Nif.add_less_or_equal_nif(cp_model_builder.res, var1.res, var2.res)
-  end
-
-  defp add_less_or_equal(cp_model_builder, %IntVar{} = var1, int2) when is_integer(int2) do
-    Nif.add_less_or_equal_constant_nif(cp_model_builder.res, var1.res, int2)
-  end
-
-  defp add_less_or_equal(cp_model_builder, %LinearExpression{} = expr1, int2)
-       when is_integer(int2) do
-    Nif.add_lin_expr_less_or_equal_constant_nif(cp_model_builder.res, expr1.res, int2)
-  end
-
-  defp add_less_or_equal(cp_model_builder, int1, %LinearExpression{} = expr2)
-       when is_integer(int1) do
-    Nif.add_constant_less_or_equal_lin_expr_nif(cp_model_builder.res, int1, expr2.res)
+  defp add_less_or_equal(
+         cp_model_builder,
+         %LinearExpression{} = expr1,
+         %LinearExpression{} = expr2
+       ) do
+    Nif.add_less_or_equal_expr1_expr2_nif(cp_model_builder.res, expr1.res, expr2.res)
   end
 
   defp add_abs_equal(cp_model_builder, %IntVar{} = var1, %IntVar{} = var2) do
@@ -410,6 +308,16 @@ defmodule Exhort.SAT.Builder do
     end)
     |> then(fn var_list ->
       Nif.add_no_overlap_nif(builder_res, var_list)
+    end)
+  end
+
+  def modify(constraint, opts, vars) do
+    Enum.each(opts, fn
+      {:if, sym} ->
+        only_enforce_if(constraint, Map.get(vars, sym))
+
+      {:unless, sym} ->
+        only_enforce_if(constraint, bool_not(Map.get(vars, sym)))
     end)
   end
 
