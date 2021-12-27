@@ -2,12 +2,14 @@
 #include <iostream>
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
+#include "absl/types/span.h"
 #include "wrappers.h"
 #include "linear_expression.h"
 #include "bool_var.h"
 #include "int_var.h"
 #include "interval_var.h"
 #include "cp_solver_response.h"
+#include "utility.h"
 
 #include "ortools/sat/model.h"
 #include "ortools/sat/sat_parameters.pb.h"
@@ -23,6 +25,9 @@ using operations_research::sat::LinearExpr;
 using operations_research::sat::Model;
 using operations_research::sat::NewFeasibleSolutionObserver;
 using operations_research::sat::SatParameters;
+
+using operations_research::sat::DecisionStrategyProto;
+using operations_research::sat::DecisionStrategyProto_DomainReductionStrategy;
 
 using namespace std;
 
@@ -813,6 +818,38 @@ extern "C"
 
     BoolVar v(var->p->Not());
     return make_bool_var(env, v);
+  }
+
+  ERL_NIF_TERM add_decision_strategy_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    vector<IntVar> *vars;
+    int variable_selection_strategy;
+    int domain_reduction_strategy;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_int_var_list(env, argv[1], &vars))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int(env, argv[2], &variable_selection_strategy))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int(env, argv[3], &domain_reduction_strategy))
+    {
+      return enif_make_badarg(env);
+    }
+
+    builder_wrapper->p->AddDecisionStrategy(*vars, static_cast<DecisionStrategyProto::VariableSelectionStrategy>(variable_selection_strategy), static_cast<DecisionStrategyProto::DomainReductionStrategy>(domain_reduction_strategy));
+
+    return argv[0];
   }
 
   ERL_NIF_TERM solve_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])

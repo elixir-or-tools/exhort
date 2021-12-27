@@ -170,6 +170,15 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
+  def add_decision_strategy_nif(
+        _builder_res,
+        _vars,
+        _variable_selection_strategy,
+        _domain_reduction_strategy
+      ) do
+    unimplemented().on_unimplemented()
+  end
+
   defp unimplemented() do
     Application.get_env(:exhort, :unimplemented)
   end

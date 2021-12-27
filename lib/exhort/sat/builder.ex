@@ -20,7 +20,7 @@ defmodule Exhort.SAT.Builder do
   alias Exhort.SAT.Vars
 
   @type t :: %__MODULE__{}
-  defstruct res: nil, vars: %Vars{}, constraints: [], objectives: []
+  defstruct res: nil, vars: %Vars{}, constraints: [], objectives: [], decision_strategy: nil
 
   @doc """
   Start a new builder.
@@ -134,6 +134,46 @@ defmodule Exhort.SAT.Builder do
   end
 
   @doc """
+  Specifiy a decision strategy on a list of variables.
+  """
+  @spec decision_strategy(
+          Builder.t(),
+          list(),
+          variable_selection_strategy ::
+            :choose_first
+            | :choose_lowest_min
+            | :choose_highest_max
+            | :choose_min_domain_size
+            | :choose_max_domain_size,
+          domain_reduction_strategy ::
+            :select_min_value
+            | :select_max_value
+            | :select_lower_half
+            | :select_upper_half
+            | :select_median_value
+        ) :: Builder.t()
+  def decision_strategy(
+        builder,
+        vars,
+        variable_selection_strategy,
+        domain_reduction_strategy
+      ) do
+    %Builder{
+      builder
+      | decision_strategy: {vars, variable_selection_strategy, domain_reduction_strategy}
+    }
+  end
+
+  @doc """
+  Provide reduction that accepts the builder as the first argument and the
+  enumerable as the second, faciliating pipelines with the `Builder`.
+  """
+  @spec reduce(Builder.t(), Enumerable.t(), function()) :: Builder.t()
+  def reduce(builder, items, f) do
+    Enum.reduce(items, builder, f)
+  end
+
+  @doc """
   Build the model. Once the model is built it may be solved.
 
   This function interacts with the underlying native model.
@@ -241,6 +281,8 @@ defmodule Exhort.SAT.Builder do
         expr1 = LinearExpression.resolve(expr1, vars)
         add_maximize(builder, expr1)
     end)
+
+    add_decision_strategy(builder, builder.decision_strategy, vars)
 
     %Model{res: builder.res, vars: vars, constraints: constraints}
   end
@@ -372,5 +414,43 @@ defmodule Exhort.SAT.Builder do
 
   defp add_maximize(%Builder{res: builder_res}, %LinearExpression{} = expr1) do
     Nif.add_maximize_nif(builder_res, expr1.res)
+  end
+
+  defp add_decision_strategy(_, nil, _), do: nil
+
+  defp add_decision_strategy(
+         builder,
+         {list, variable_selection_strategy, domain_reduction_strategy},
+         vars
+       ) do
+    variable_selection_strategies = %{
+      choose_first: 0,
+      choose_lowest_min: 1,
+      choose_highest_max: 2,
+      choose_min_domain_size: 3,
+      choose_max_domain_size: 4
+    }
+
+    domain_reduction_strategies = %{
+      select_min_value: 0,
+      select_max_value: 1,
+      select_lower_half: 2,
+      select_upper_half: 3,
+      select_median_value: 4
+    }
+
+    list
+    |> Enum.map(fn var ->
+      Vars.get(vars, var)
+      |> then(& &1.res)
+    end)
+    |> then(fn var_list ->
+      Nif.add_decision_strategy_nif(
+        builder.res,
+        var_list,
+        Map.fetch!(variable_selection_strategies, variable_selection_strategy),
+        Map.fetch!(domain_reduction_strategies, domain_reduction_strategy)
+      )
+    end)
   end
 end
