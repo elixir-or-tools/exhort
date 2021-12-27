@@ -250,4 +250,21 @@ defmodule Exhort.SAT.LinearExpression do
         join_fn.(expr, term)
     end)
   end
+
+  @doc """
+  Create an expression from the given list of terms. Each term is is a two-value
+  tuple. The first element of the tuple is a constant coefficient. The second
+  element is an integer variable.
+
+  ```
+  [{3, :x}, {4, :y}, {5, :z}] => 3*x + 4*y + 5*z
+  ```
+  """
+  @spec terms([{integer(), atom() | String.t()}]) :: LinearExpression.t()
+  def terms(items) do
+    Enum.unzip(items)
+    |> then(fn {coeff, vars} ->
+      prod(vars, coeff)
+    end)
+  end
 end

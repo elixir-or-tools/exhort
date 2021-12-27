@@ -26,11 +26,9 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
       |> Builder.reduce(all_bins, &Builder.def_bool_var(&2, "slack_#{&1}"))
       |> Builder.reduce(all_bins, fn bin, builder ->
         expr =
-          LinearExpression.terms(
-            items,
-            &LinearExpression.prod("x_#{elem(&1, 0)}_#{bin}", elem(&1, 0)),
-            &LinearExpression.sum(&1, &2)
-          )
+          items
+          |> Enum.map(&{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
+          |> LinearExpression.terms()
 
         builder
         |> Builder.constrain(expr, :==, "load_#{bin}")
