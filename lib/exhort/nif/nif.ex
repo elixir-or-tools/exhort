@@ -24,6 +24,10 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
+  def new_constant_nif(_cp_model_builder, _name, _value) do
+    unimplemented().on_unimplemented()
+  end
+
   def new_interval_var_nif(_builder, _name, _start, _size, _stop) do
     unimplemented().on_unimplemented()
   end

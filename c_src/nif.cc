@@ -44,6 +44,7 @@ extern "C"
       {"new_bool_var_nif", 2, new_bool_var_nif},
       {"new_builder_nif", 0, new_builder_nif},
       {"new_int_var_nif", 4, new_int_var_nif},
+      {"new_constant_nif", 3, new_constant_nif},
       {"new_interval_var_nif", 5, new_interval_var_nif},
       {"only_enforce_if_nif", 2, only_enforce_if_nif},
       {"solution_bool_value_nif", 2, solution_bool_value_nif},

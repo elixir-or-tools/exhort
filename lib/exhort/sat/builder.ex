@@ -73,6 +73,11 @@ defmodule Exhort.SAT.Builder do
     }
   end
 
+  @spec def_constant(Builder.t(), name :: atom() | String.t(), value :: integer()) :: Builder.t()
+  def def_constant(%Builder{vars: vars} = builder, name, value) do
+    %Builder{builder | vars: Vars.add(vars, %IntVar{name: name, domain: value})}
+  end
+
   @doc """
   Define a constraint on the model using variables.
 
@@ -146,6 +151,10 @@ defmodule Exhort.SAT.Builder do
 
         %IntVar{name: name, domain: {upper_bound, lower_bound}} = var, vars ->
           %IntVar{res: res} = new_int_var(builder, upper_bound, lower_bound, name)
+          Vars.add(vars, %IntVar{var | res: res})
+
+        %IntVar{name: name, domain: constant} = var, vars ->
+          %IntVar{res: res} = new_constant(builder, name, constant)
           Vars.add(vars, %IntVar{var | res: res})
 
         %IntervalVar{name: name, start: start, size: size, stop: stop} = var, vars ->
@@ -247,6 +256,11 @@ defmodule Exhort.SAT.Builder do
   defp new_int_var(%{res: res} = _cp_model_builder, upper_bound, lower_bound, name) do
     res = Nif.new_int_var_nif(res, upper_bound, lower_bound, to_str(name))
     %IntVar{res: res, name: name, domain: {upper_bound, lower_bound}}
+  end
+
+  defp new_constant(%{res: res} = _cp_model_builder, name, value) do
+    res = Nif.new_constant_nif(res, to_str(name), value)
+    %IntVar{res: res, name: name, domain: value}
   end
 
   defp new_interval_var(%{res: res} = _cp_model_builder, name, start, size, stop) do

@@ -105,6 +105,27 @@ extern "C"
     return make_int_var(env, v);
   }
 
+  ERL_NIF_TERM new_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+
+    BuilderWrapper *builder_wrapper;
+    ErlNifBinary name;
+    int value;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    enif_inspect_iolist_as_binary(env, argv[1], &name);
+
+    enif_get_int(env, argv[2], &value);
+
+    IntVar v = builder_wrapper->p->NewConstant(value).WithName((char *)name.data);
+
+    return make_int_var(env, v);
+  }
+
   ERL_NIF_TERM new_interval_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
