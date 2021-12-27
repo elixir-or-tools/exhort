@@ -49,8 +49,8 @@ defmodule Exhort.SAT.SolutonListener do
   Handle a response from the model.
   """
   @impl true
-  def handle_info({response_res, int_status}, {builder, callback, acc}) do
-    acc = callback.(SolverResponse.build({response_res, int_status}, builder), acc)
+  def handle_info(response, {builder, callback, acc}) do
+    acc = callback.(SolverResponse.build(response, builder), acc)
     {:noreply, {builder, callback, acc}}
   end
 end

@@ -805,10 +805,7 @@ extern "C"
 
     CpSolverResponse response = Solve(builder_wrapper->p->Build());
 
-    ERL_NIF_TERM term = make_cp_solver_response(env, response);
-    int64_t status = enif_make_int64(env, response.status());
-
-    return enif_make_tuple2(env, term, status);
+    return make_cp_solver_response(env, response);
   }
 
   ERL_NIF_TERM solve_with_callback_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -831,16 +828,11 @@ extern "C"
     model.Add(NewFeasibleSolutionObserver([&](const CpSolverResponse &r)
                                           {
                                             ERL_NIF_TERM term = make_cp_solver_response(env, r);
-                                            int64_t status = enif_make_int64(env, r.status());
-
-                                            enif_send(env, &pid, NULL, enif_make_tuple2(env, term, status));
+                                            enif_send(env, &pid, NULL, term);
                                           }));
+
     CpSolverResponse response = SolveCpModel(builder_wrapper->p->Build(), &model);
-
-    ERL_NIF_TERM term = make_cp_solver_response(env, response);
-    int64_t status = enif_make_int64(env, response.status());
-
-    return enif_make_tuple2(env, term, status);
+    return make_cp_solver_response(env, response);
   }
 
   ERL_NIF_TERM solution_bool_value_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])

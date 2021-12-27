@@ -33,6 +33,7 @@ defmodule Exhort.SAT.Model do
     {:ok, pid} = SolutonListener.start_link(model, callback)
 
     response = SolverResponse.build(Nif.solve_with_callback_nif(model.res, pid), model)
+
     acc = SolutonListener.acc(pid)
 
     SolutonListener.stop(pid)

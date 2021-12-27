@@ -6,7 +6,7 @@ defmodule Exhort.SAT.SolverResponse do
   """
 
   @type t :: %__MODULE__{}
-  defstruct [:res, :model, :status, :int_status]
+  defstruct [:res, :model, :status, :int_status, :objective, :walltime, :usertime]
 
   alias __MODULE__
   alias Exhort.NIF.Nif
@@ -14,14 +14,30 @@ defmodule Exhort.SAT.SolverResponse do
   alias Exhort.SAT.Model
   alias Exhort.SAT.Vars
 
-  @spec build({any(), integer()}, Model.t()) :: SolverResponse.t()
-  def build({res, int_status}, model) do
+  @spec build(map(), Model.t()) :: SolverResponse.t()
+  def build(
+        %{
+          "res" => res,
+          "status" => int_status,
+          "objective" => objective,
+          "walltime" => walltime,
+          "usertime" => usertime
+        },
+        model
+      ) do
     %SolverResponse{
       res: res,
       model: model,
       status: status_from_int(int_status),
-      int_status: int_status
+      int_status: int_status,
+      objective: objective,
+      walltime: walltime,
+      usertime: usertime
     }
+  end
+
+  def stats(response) do
+    Map.take(response, [:status, :objective, :walltime, :usertime])
   end
 
   def status_from_int(int) do
