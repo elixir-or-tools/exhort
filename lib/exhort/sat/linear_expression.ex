@@ -234,4 +234,20 @@ defmodule Exhort.SAT.LinearExpression do
   def constant(int) do
     %LinearExpression{expr: {:constant, int}}
   end
+
+  @doc """
+  Create an expression from the given `items`. Each expression is created using
+  `term_fn` and joined using `join_fn`.
+  """
+  def terms(items, term_fn, join_fn) do
+    items
+    |> Enum.reduce(nil, fn
+      item, nil ->
+        term_fn.(item)
+
+      item, expr ->
+        term = term_fn.(item)
+        join_fn.(expr, term)
+    end)
+  end
 end
