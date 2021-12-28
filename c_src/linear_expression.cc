@@ -193,6 +193,38 @@ extern "C"
     return term;
   }
 
+  ERL_NIF_TERM sum_exprs_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    const ERL_NIF_TERM *vars;
+    int arity;
+
+    if (!enif_get_tuple(env, argv[0], &arity, &vars))
+    {
+      return enif_make_badarg(env);
+    }
+
+    LinearExpr exprs;
+    for (int i = 0; i < arity; i++)
+    {
+      LinearExprWrapper *expr;
+      if (!get_linear_expression(env, vars[i], &expr))
+      {
+        return enif_make_badarg(env);
+      }
+      exprs += *expr->p;
+    }
+
+    LinearExprWrapper *result = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
+    if (result == NULL)
+      return enif_make_badarg(env);
+
+    result->p = new LinearExpr(exprs);
+    ERL_NIF_TERM term = enif_make_resource(env, result);
+    enif_release_resource(result);
+
+    return term;
+  }
+
   ERL_NIF_TERM sum_int_vars_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     const ERL_NIF_TERM *vars;
@@ -278,6 +310,33 @@ extern "C"
 
     linear_expr_wrapper->p = new LinearExpr(*expr1->p - *expr2->p);
     ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
+    enif_release_resource(linear_expr_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM prod_bool_var1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BoolVarWrapper *var1;
+    int int2;
+    ERL_NIF_TERM term;
+
+    if (!get_bool_var(env, argv[0], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!enif_get_int(env, argv[1], &int2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
+    if (linear_expr_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    linear_expr_wrapper->p = new LinearExpr(LinearExpr::ScalProd({*var1->p}, {int2}));
+    term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 
     return term;
