@@ -26,6 +26,28 @@ defmodule Exhort.SAT.LinearExpression do
   def resolve(
         %LinearExpression{
           res: nil,
+          expr: {:sum, [%LinearExpression{expr: {:prod, _, _}} | _] = expr_list}
+        } = expr,
+        vars
+      )
+      when is_list(expr_list) do
+    expr_list
+    |> then(fn
+      [%LinearExpression{} | _] = expr_list ->
+        expr_list
+        |> Enum.map(fn expr ->
+          expr = resolve(expr, vars)
+          expr.res
+        end)
+        |> List.to_tuple()
+        |> Nif.sum_exprs_nif()
+    end)
+    |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr_list}})
+  end
+
+  def resolve(
+        %LinearExpression{
+          res: nil,
           expr: {:sum, expr_list}
         } = expr,
         vars
@@ -61,6 +83,12 @@ defmodule Exhort.SAT.LinearExpression do
 
     Nif.sum_expr1_expr2_nif(expr1.res, expr2.res)
     |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr1, expr2}})
+  end
+
+  def resolve(%LinearExpression{res: nil, expr: {:prod, %BoolVar{} = var1, int2}} = expr, _vars)
+      when is_integer(int2) do
+    Nif.prod_bool_var1_constant2_nif(var1.res, int2)
+    |> then(&%LinearExpression{expr | res: &1})
   end
 
   def resolve(

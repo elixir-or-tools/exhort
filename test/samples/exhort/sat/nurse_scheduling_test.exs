@@ -6,12 +6,20 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
   alias Exhort.SAT.Model
 
   test "nurse scheduling" do
-    num_nurses = 4
+    num_nurses = 5
     num_shifts = 3
-    num_days = 3
+    num_days = 7
     all_nurses = 1..num_nurses
     all_shifts = 1..num_shifts
     all_days = 1..num_days
+
+    shift_requests = [
+      [[0, 0, 1], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 0, 1]],
+      [[0, 0, 0], [0, 0, 0], [0, 1, 0], [0, 1, 0], [1, 0, 0], [0, 0, 0], [0, 0, 1]],
+      [[0, 1, 0], [0, 1, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0], [0, 1, 0], [0, 0, 0]],
+      [[0, 0, 1], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0]],
+      [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 0]]
+    ]
 
     acc = %{
       builder: Builder.new(),
@@ -76,10 +84,27 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
         |> Builder.constrain(LinearExpression.sum(shift_option_vars), :<=, max_shifts_per_nurse)
       end)
 
-    assert :optimal ==
-             builder
-             |> Builder.build()
-             |> Model.solve()
-             |> then(& &1.status)
+    builder =
+      Enum.reduce(all_nurses, [], fn nurse, shift_obj ->
+        Enum.reduce(all_days, shift_obj, fn day, shift_obj ->
+          Enum.reduce(all_shifts, shift_obj, fn shift, shift_obj ->
+            shift_var = "shift_#{nurse}_#{day}_#{shift}"
+
+            request =
+              shift_requests |> Enum.at(nurse - 1) |> Enum.at(day - 1) |> Enum.at(shift - 1)
+
+            shift_obj ++ [LinearExpression.prod(shift_var, request)]
+          end)
+        end)
+      end)
+      |> then(&Builder.maximize(builder, LinearExpression.sum(&1)))
+
+    solver =
+      builder
+      |> Builder.build()
+      |> Model.solve()
+
+    assert solver.status == :optimal
+    assert solver.objective == 13
   end
 end
