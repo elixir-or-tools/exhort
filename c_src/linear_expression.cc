@@ -96,33 +96,7 @@ extern "C"
     return term;
   }
 
-  ERL_NIF_TERM sum_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-  {
-    LinearExprWrapper *expr1;
-    LinearExprWrapper *expr2;
-
-    if (!get_linear_expression(env, argv[0], &expr1))
-    {
-      return enif_make_badarg(env);
-    }
-
-    if (!get_linear_expression(env, argv[1], &expr2))
-    {
-      return enif_make_badarg(env);
-    }
-
-    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
-    if (linear_expr_wrapper == NULL)
-      return enif_make_badarg(env);
-
-    linear_expr_wrapper->p = new LinearExpr(*expr1->p + *expr2->p);
-    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
-    enif_release_resource(linear_expr_wrapper);
-
-    return term;
-  }
-
-  ERL_NIF_TERM sum_exprs_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  ERL_NIF_TERM sum_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     const ERL_NIF_TERM *vars;
     int arity;
@@ -132,7 +106,7 @@ extern "C"
       return enif_make_badarg(env);
     }
 
-    LinearExpr exprs;
+    LinearExpr linear_expr;
     for (int i = 0; i < arity; i++)
     {
       LinearExprWrapper *expr;
@@ -140,80 +114,16 @@ extern "C"
       {
         return enif_make_badarg(env);
       }
-      exprs += *expr->p;
+      linear_expr += *expr->p;
     }
 
     LinearExprWrapper *result = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
     if (result == NULL)
       return enif_make_badarg(env);
 
-    result->p = new LinearExpr(exprs);
+    result->p = new LinearExpr(linear_expr);
     ERL_NIF_TERM term = enif_make_resource(env, result);
     enif_release_resource(result);
-
-    return term;
-  }
-
-  ERL_NIF_TERM sum_int_vars_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-  {
-    const ERL_NIF_TERM *vars;
-    int arity;
-
-    if (!enif_get_tuple(env, argv[0], &arity, &vars))
-    {
-      return enif_make_badarg(env);
-    }
-
-    std::vector<IntVar> exprs;
-    for (int i = 0; i < arity; i++)
-    {
-      IntVarWrapper *expr;
-      if (!get_int_var(env, vars[i], &expr))
-      {
-        return enif_make_badarg(env);
-      }
-      exprs.push_back(*expr->p);
-    }
-
-    LinearExprWrapper *result = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
-    if (result == NULL)
-      return enif_make_badarg(env);
-
-    result->p = new LinearExpr(LinearExpr::Sum(exprs));
-    ERL_NIF_TERM term = enif_make_resource(env, result);
-    enif_release_resource(result);
-
-    return term;
-  }
-
-  ERL_NIF_TERM sum_bool_vars_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-  {
-    const ERL_NIF_TERM *vars;
-    int arity;
-
-    if (!enif_get_tuple(env, argv[0], &arity, &vars))
-    {
-      return enif_make_badarg(env);
-    }
-
-    std::vector<BoolVar> bool_vars;
-    for (int i = 0; i < arity; i++)
-    {
-      BoolVarWrapper *bool_var_wrapper;
-      if (!get_bool_var(env, vars[i], &bool_var_wrapper))
-      {
-        return enif_make_badarg(env);
-      }
-      bool_vars.push_back(*bool_var_wrapper->p);
-    }
-
-    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
-    if (linear_expr_wrapper == NULL)
-      return enif_make_badarg(env);
-
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::Sum(bool_vars));
-    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
-    enif_release_resource(linear_expr_wrapper);
 
     return term;
   }

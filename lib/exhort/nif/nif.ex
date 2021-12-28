@@ -114,19 +114,7 @@ defmodule Exhort.NIF.Nif do
     1
   end
 
-  def sum_expr1_expr2_nif(_var1, _var2) do
-    unimplemented().on_unimplemented()
-  end
-
-  def sum_exprs_nif(_var1s) do
-    unimplemented().on_unimplemented()
-  end
-
-  def sum_int_vars_nif(_vars) do
-    unimplemented().on_unimplemented()
-  end
-
-  def sum_bool_vars_nif(_vars) do
+  def sum_nif(_var1s) do
     unimplemented().on_unimplemented()
   end
 
