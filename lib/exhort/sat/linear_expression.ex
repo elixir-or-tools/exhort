@@ -26,49 +26,12 @@ defmodule Exhort.SAT.LinearExpression do
   def resolve(
         %LinearExpression{
           res: nil,
-          expr: {:sum, [%LinearExpression{expr: {:prod, _, _}} | _] = expr_list}
+          expr: {:sum, sum_list}
         } = expr,
         vars
       )
-      when is_list(expr_list) do
-    expr_list
-    |> then(fn
-      [%LinearExpression{} | _] = expr_list ->
-        expr_list
-        |> Enum.map(fn expr ->
-          expr = resolve(expr, vars)
-          expr.res
-        end)
-        |> List.to_tuple()
-        |> Nif.sum_exprs_nif()
-    end)
-    |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr_list}})
-  end
-
-  def resolve(
-        %LinearExpression{
-          res: nil,
-          expr: {:sum, expr_list}
-        } = expr,
-        vars
-      )
-      when is_list(expr_list) do
-    expr_list
-    |> Enum.map(&Vars.get(vars, &1))
-    |> then(fn
-      [%IntVar{} | _] = vars ->
-        vars
-        |> Enum.map(& &1.res)
-        |> List.to_tuple()
-        |> Nif.sum_int_vars_nif()
-
-      [%BoolVar{} | _] = vars ->
-        vars
-        |> Enum.map(& &1.res)
-        |> List.to_tuple()
-        |> Nif.sum_bool_vars_nif()
-    end)
-    |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr_list}})
+      when is_list(sum_list) do
+    resolve_sum(expr, sum_list, vars)
   end
 
   def resolve(
@@ -78,11 +41,8 @@ defmodule Exhort.SAT.LinearExpression do
         } = expr,
         vars
       ) do
-    expr1 = resolve(expr1, vars)
-    expr2 = resolve(expr2, vars)
-
-    Nif.sum_expr1_expr2_nif(expr1.res, expr2.res)
-    |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr1, expr2}})
+    sum_list = [expr1, expr2]
+    resolve_sum(expr, sum_list, vars)
   end
 
   def resolve(%LinearExpression{res: nil, expr: {:prod, %BoolVar{} = var1, int2}} = expr, _vars)
@@ -220,6 +180,20 @@ defmodule Exhort.SAT.LinearExpression do
     vars
     |> Vars.get(val)
     |> resolve(vars)
+  end
+
+  defp resolve_sum(expr, sum_list, vars) do
+    case sum_list do
+      [%LinearExpression{} | _] = sum_list -> sum_list
+      sum_list -> sum_list |> Enum.map(&Vars.get(vars, &1))
+    end
+    |> Enum.map(fn expr ->
+      expr = resolve(expr, vars)
+      expr.res
+    end)
+    |> List.to_tuple()
+    |> Nif.sum_nif()
+    |> then(&%LinearExpression{expr | res: &1, expr: {:sum, sum_list}})
   end
 
   @doc """
