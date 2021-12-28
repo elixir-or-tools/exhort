@@ -167,10 +167,13 @@ defmodule Exhort.SAT.LinearExpression do
 
   @spec resolve_sum(LinearExpression.t(), list(), map()) :: LinearExpression.t()
   defp resolve_sum(expr, sum_list, vars) do
-    case sum_list do
-      [%LinearExpression{} | _] = sum_list -> sum_list
-      sum_list -> sum_list |> Enum.map(&Vars.get(vars, &1))
-    end
+    sum_list
+    |> Enum.map(fn item ->
+      case item do
+        %LinearExpression{} = item -> item
+        _ -> Vars.get(vars, item)
+      end
+    end)
     |> Enum.map(fn expr ->
       expr = resolve(expr, vars)
       expr.res
