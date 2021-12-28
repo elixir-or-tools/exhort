@@ -18,8 +18,6 @@ extern "C"
 
   ERL_NIF_TERM minus_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
-  ERL_NIF_TERM minus_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
   int get_linear_expression(ErlNifEnv *env, ERL_NIF_TERM term, LinearExprWrapper **obj);
 
   ERL_NIF_TERM expr_from_int_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);

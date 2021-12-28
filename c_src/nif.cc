@@ -56,7 +56,7 @@ extern "C"
       {"prod_int_var1_constant2_nif", 2, prod_int_var1_constant2_nif},
       {"prod_list1_list2_nif", 2, prod_list1_list2_nif},
       {"sum_nif", 1, sum_nif},
-      {"minus_expr1_expr2_nif", 2, minus_expr1_expr2_nif},
+      {"minus_nif", 2, minus_nif},
       {"expr_from_int_var_nif", 1, expr_from_int_var_nif},
       {"expr_from_bool_var_nif", 1, expr_from_bool_var_nif},
       {"expr_from_constant_nif", 1, expr_from_constant_nif}};

@@ -101,8 +101,8 @@ defmodule Exhort.SAT.LinearExpression do
     expr1 = resolve(expr1, vars)
     expr2 = resolve(expr2, vars)
 
-    Nif.minus_expr1_expr2_nif(expr1.res, expr2.res)
-    |> then(&%LinearExpression{expr | res: &1, expr: {:sum, expr1, expr2}})
+    Nif.minus_nif(expr1.res, expr2.res)
+    |> then(&%LinearExpression{expr | res: &1, expr: {:minus, expr1, expr2}})
   end
 
   def resolve(
@@ -182,6 +182,7 @@ defmodule Exhort.SAT.LinearExpression do
     |> resolve(vars)
   end
 
+  @spec resolve_sum(LinearExpression.t(), list(), map()) :: LinearExpression.t()
   defp resolve_sum(expr, sum_list, vars) do
     case sum_list do
       [%LinearExpression{} | _] = sum_list -> sum_list

@@ -128,7 +128,7 @@ extern "C"
     return term;
   }
 
-  ERL_NIF_TERM minus_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  ERL_NIF_TERM minus_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     LinearExprWrapper *expr1;
     LinearExprWrapper *expr2;

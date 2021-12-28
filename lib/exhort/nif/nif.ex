@@ -114,11 +114,11 @@ defmodule Exhort.NIF.Nif do
     1
   end
 
-  def sum_nif(_var1s) do
+  def sum_nif(_vars) do
     unimplemented().on_unimplemented()
   end
 
-  def minus_expr1_expr2_nif(_expr1, _expr2) do
+  def minus_nif(_expr1, _expr2) do
     unimplemented().on_unimplemented()
   end
 
