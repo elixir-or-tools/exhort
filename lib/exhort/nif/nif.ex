@@ -130,10 +130,6 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
-  def prod_list1_list2_nif(_list1, _list2) do
-    unimplemented().on_unimplemented()
-  end
-
   def expr_from_bool_var_nif(_bool_var) do
     unimplemented().on_unimplemented()
   end

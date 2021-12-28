@@ -60,23 +60,6 @@ defmodule Exhort.SAT.LinearExpression do
     |> then(&%LinearExpression{expr | res: &1})
   end
 
-  def resolve(
-        %LinearExpression{res: nil, expr: {:prod, list1, list2}} = expr,
-        vars
-      )
-      when is_list(list1) and is_list(list2) do
-    {
-      list1
-      |> Enum.map(&Vars.get(vars, &1))
-      |> Enum.map(& &1.res),
-      list2
-    }
-    |> then(fn {list1, list2} ->
-      Nif.prod_list1_list2_nif(list1, list2)
-    end)
-    |> then(&%LinearExpression{expr | res: &1})
-  end
-
   def resolve(%LinearExpression{res: nil, expr: {:prod, sym1, int2}} = expr, vars)
       when not is_integer(sym1) and is_integer(int2) do
     var1 = Vars.get(vars, sym1)
@@ -226,6 +209,12 @@ defmodule Exhort.SAT.LinearExpression do
   """
   @spec prod(IntVar.t() | integer() | list(), IntVar.t() | integer() | list()) ::
           LinearExpression.t()
+  def prod(val1, val2) when is_list(val1) and is_list(val2) do
+    Enum.zip(val1, val2)
+    |> Enum.map(&prod(elem(&1, 0), elem(&1, 1)))
+    |> then(&%LinearExpression{expr: {:sum, &1}})
+  end
+
   def prod(val1, val2) do
     %LinearExpression{expr: {:prod, val1, val2}}
   end

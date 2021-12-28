@@ -54,7 +54,6 @@ extern "C"
       {"solve_with_callback_nif", 2, solve_with_callback_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
       {"prod_bool_var1_constant2_nif", 2, prod_bool_var1_constant2_nif},
       {"prod_int_var1_constant2_nif", 2, prod_int_var1_constant2_nif},
-      {"prod_list1_list2_nif", 2, prod_list1_list2_nif},
       {"sum_nif", 1, sum_nif},
       {"minus_nif", 2, minus_nif},
       {"expr_from_int_var_nif", 1, expr_from_int_var_nif},

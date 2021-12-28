@@ -208,35 +208,6 @@ extern "C"
     return term;
   }
 
-  ERL_NIF_TERM prod_list1_list2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-  {
-    vector<IntVar> *var1;
-    vector<int64_t> *var2;
-
-    if (!get_int_var_list(env, argv[0], &var1))
-    {
-      return enif_make_badarg(env);
-    }
-
-    if (!get_int_list(env, argv[1], &var2))
-    {
-      return enif_make_badarg(env);
-    }
-
-    LinearExprWrapper *linear_expr_wrapper = (LinearExprWrapper *)enif_alloc_resource(LINEAR_EXPR_WRAPPER, sizeof(LinearExprWrapper));
-    if (linear_expr_wrapper == NULL)
-      return enif_make_badarg(env);
-
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::ScalProd(*var1, *var2));
-    ERL_NIF_TERM term = enif_make_resource(env, linear_expr_wrapper);
-    enif_release_resource(linear_expr_wrapper);
-
-    delete var1;
-    delete var2;
-
-    return term;
-  }
-
   int load_linear_expression(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
   {
     if (init_types(env) == -1)
