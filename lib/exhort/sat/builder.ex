@@ -4,8 +4,10 @@ defmodule Exhort.SAT.Builder do
 
   All functions except `build/0` are pure Elixir.
 
+  Create a new builder with `new/0`. Build a model with `build/0`.
+
   `build/0` interacts with the underlying native implementation, returning a
-  `%Model{}`.
+  `Exhort.SAT.Model` struct.
   """
 
   alias __MODULE__
@@ -52,18 +54,21 @@ defmodule Exhort.SAT.Builder do
   end
 
   @doc """
-  Define an integer variable in the model.
+  Define an interval variable in the model.
 
-  - `var` is the variable name
-  - `domain` is the uppper and lower bounds of the integer as a tuple,
-    `{lower_bound, upper_bound}`
+  See https://developers.google.com/optimization/reference/python/sat/python/cp_model#intervalvar
+
+  - `name` is the variable name
+  - `start` is the start of the interval
+  - `size` is the size of the interval
+  - `stop` is the end of the interval
   """
   @spec def_interval_var(
           Builder.t(),
           name :: atom() | String.t(),
-          start :: atom() | String.t(),
-          size :: atom() | String.t(),
-          stop :: atom() | String.t()
+          start_literal :: atom() | String.t(),
+          size :: integer(),
+          stop_literal :: atom() | String.t()
         ) ::
           Builder.t()
   def def_interval_var(%Builder{vars: vars} = builder, var, start, size, stop) do
@@ -73,6 +78,9 @@ defmodule Exhort.SAT.Builder do
     }
   end
 
+  @doc """
+  Create a named constant.
+  """
   @spec def_constant(Builder.t(), name :: atom() | String.t(), value :: integer()) :: Builder.t()
   def def_constant(%Builder{vars: vars} = builder, name, value) do
     %Builder{builder | vars: Vars.add(vars, %IntVar{name: name, domain: value})}
@@ -81,18 +89,17 @@ defmodule Exhort.SAT.Builder do
   @doc """
   Define a constraint on the model using variables.
 
-  - `constraint` is specified as an atom. See
-    `Exhort.SAT.Constraint.constraint()`.
-  - `lhs` and `rhs` may each either be an atom, string, `LinearExpression`,
-    or an existing `BoolVar` or `IntVar`.
+  - `constraint` is specified as an atom. See `Exhort.SAT.Constraint`.
+  - `lhs` and `rhs` may each either be an atom, string, `LinearExpression`, or
+    an existing `BoolVar` or `IntVar`.
   - `opts` may specify a restriction on the constraint:
-      - `if: BoolVar` specifies that a constraint only takes effect if `BoolVar` is
-        true
-      - `unless: BoolVar` specifies that a constraint only takes effect if `BoolVar`
-        is false
+      - `if: BoolVar` specifies that a constraint only takes effect if `BoolVar`
+        is true
+      - `unless: BoolVar` specifies that a constraint only takes effect if
+        `BoolVar` is false
 
-  - `:==` - `var1 == var2`
-  - `:abs==` - `var1 == abs(var2)`
+  - `:==` - `lhs == rhs`
+  - `:abs==` - `lhs == abs(rhs)`
   - `:"all!="` - Require each element the provide list has a different value
     from all the rest
   """
@@ -112,25 +119,40 @@ defmodule Exhort.SAT.Builder do
     }
   end
 
+  @doc """
+  Apply the constraint to the given list.
+
+  See `Exhort.SAT.Constraint` for the list of constraints.
+  """
   @spec constrain_list(Builder.t(), Constraint.constraint(), list(), opts :: Keyword.t()) ::
           Builder.t()
   def constrain_list(%Builder{} = builder, constraint, list, opts \\ []) do
     %Builder{builder | constraints: builder.constraints ++ [{constraint, list, opts}]}
   end
 
-  @spec max_equality(Builder.t(), sym :: atom() | String.t() | IntVar.t(), list()) :: Builder.t()
-  def max_equality(builder, sym, list) do
-    %Builder{builder | objectives: builder.objectives ++ [{:max_equality, sym, list}]}
+  @doc """
+  Add a constraint on the variable named by `literal` to the list of items in `list`.
+  """
+  @spec max_equality(Builder.t(), literal :: atom() | String.t() | IntVar.t(), list()) ::
+          Builder.t()
+  def max_equality(builder, literal, list) do
+    %Builder{builder | objectives: builder.objectives ++ [{:max_equality, literal, list}]}
   end
 
-  @spec minimize(Builder.t(), sym :: atom() | String.t() | IntVar.t()) :: Builder.t()
-  def minimize(builder, sym) do
-    %Builder{builder | objectives: builder.objectives ++ [{:minimize, sym}]}
+  @doc """
+  Specify an objective to minimize `literal`.
+  """
+  @spec minimize(Builder.t(), literal :: atom() | String.t() | IntVar.t()) :: Builder.t()
+  def minimize(builder, literal) do
+    %Builder{builder | objectives: builder.objectives ++ [{:minimize, literal}]}
   end
 
-  @spec maximize(Builder.t(), sym :: atom() | String.t() | IntVar.t()) :: Builder.t()
-  def maximize(builder, sym) do
-    %Builder{builder | objectives: builder.objectives ++ [{:maximize, sym}]}
+  @doc """
+  Specify an objective to maximize `literal`.
+  """
+  @spec maximize(Builder.t(), literal :: atom() | String.t() | IntVar.t()) :: Builder.t()
+  def maximize(builder, literal) do
+    %Builder{builder | objectives: builder.objectives ++ [{:maximize, literal}]}
   end
 
   @doc """
@@ -377,7 +399,7 @@ defmodule Exhort.SAT.Builder do
     end)
   end
 
-  def modify(constraint, opts, vars) do
+  defp modify(constraint, opts, vars) do
     Enum.each(opts, fn
       {:if, sym} ->
         only_enforce_if(constraint, Vars.get(vars, sym))

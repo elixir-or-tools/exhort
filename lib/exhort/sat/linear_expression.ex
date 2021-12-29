@@ -20,7 +20,8 @@ defmodule Exhort.SAT.LinearExpression do
   @type eterm :: atom() | String.t() | LinearExpression.t()
 
   @doc """
-  Apply the linear expression to the model.
+  Associate the parts of a linear expression with the native representation,
+  recusively associating the constituent components as necessary.
   """
   @spec resolve(LinearExpression.t() | IntVar.t() | integer(), map()) :: LinearExpression.t()
   def resolve(
