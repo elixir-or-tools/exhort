@@ -14,6 +14,7 @@ defmodule Exhort.SAT.LinearExpression do
   alias __MODULE__
   alias Exhort.NIF.Nif
   alias Exhort.SAT.BoolVar
+  alias Exhort.SAT.DSL
   alias Exhort.SAT.IntVar
   alias Exhort.SAT.Vars
 
@@ -257,10 +258,14 @@ defmodule Exhort.SAT.LinearExpression do
   ```
   """
   @spec terms([{integer(), atom() | String.t()}]) :: LinearExpression.t()
-  def terms(items) do
+  def terms(items) when is_list(items) do
     Enum.unzip(items)
     |> then(fn {coeff, vars} ->
       prod(vars, coeff)
     end)
+  end
+
+  defmacro term(expression_ast) do
+    DSL.transform_expression(expression_ast)
   end
 end

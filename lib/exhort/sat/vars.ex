@@ -26,7 +26,7 @@ defmodule Exhort.SAT.Vars do
   @spec get(Vars.t(), atom() | String.t()) :: any()
   def get(%Vars{map: map} = _vars, name) do
     case Map.get(map, name) do
-      nil -> raise "Undefined variable: #{name}"
+      nil -> raise "Undefined variable: #{inspect(name)}"
       var -> var
     end
   end

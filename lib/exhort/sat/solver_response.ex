@@ -45,6 +45,10 @@ defmodule Exhort.SAT.SolverResponse do
     |> Map.get(int)
   end
 
+  @doc """
+  Get the corresponding value of the boolean variable.
+  """
+  @spec bool_val(SolverResponse.t(), literal :: atom() | String.t()) :: nil | boolean()
   def bool_val(%{status: status}, _atom) when status in [:unknown, :model_invalid, :infeasible],
     do: nil
 
@@ -53,6 +57,10 @@ defmodule Exhort.SAT.SolverResponse do
     Nif.solution_bool_value_nif(response.res, var.res) == 1
   end
 
+  @doc """
+  Get the corresponding value of the integer variable.
+  """
+  @spec int_val(SolverResponse.t(), literal :: atom() | String.t()) :: nil | integer()
   def int_val(%{status: status}, _atom) when status in [:unknown, :model_invalid, :infeasible],
     do: nil
 
@@ -60,8 +68,29 @@ defmodule Exhort.SAT.SolverResponse do
     Nif.solution_integer_value_nif(response.res, var.res)
   end
 
-  def int_val(%SolverResponse{model: %{vars: vars}} = response, atom) do
-    %IntVar{res: var_res} = Vars.get(vars, atom)
+  def int_val(%SolverResponse{model: %{vars: vars}} = response, literal)
+      when is_atom(literal) or is_binary(literal) do
+    %IntVar{res: var_res} = Vars.get(vars, literal)
     Nif.solution_integer_value_nif(response.res, var_res)
   end
+
+  defmacro int_var(response_exp, var_exp) do
+    var = transform(var_exp)
+
+    quote do
+      %SolverResponse{res: response_res, model: %{vars: vars}} = unquote(response_exp)
+      %IntVar{res: var_res} = Vars.get(vars, unquote(var))
+      Nif.solution_integer_value_nif(response_res, var_res)
+    end
+  end
+
+  defmacro bool_var(response_exp, var_exp) do
+    quote do
+      %SolverResponse{res: response_res, model: %{vars: vars}} = unquote(response_exp)
+      %BoolVar{res: var_res} = Vars.get(vars, unquote(transform(var_exp)))
+      Nif.solution_bool_value_nif(response_res, var_res)
+    end
+  end
+
+  defp transform({x, _, _}), do: x
 end

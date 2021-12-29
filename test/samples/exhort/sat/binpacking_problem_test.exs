@@ -1,9 +1,12 @@
 defmodule Samples.Exhort.SAT.BinpackingProblem do
   use ExUnit.Case
 
-  alias Exhort.SAT.Builder
+  alias Exhort.SAT.ExpressionBuilder, as: Builder
   alias Exhort.SAT.LinearExpression
   alias Exhort.SAT.Model
+
+  require Builder
+  require LinearExpression
 
   test "binpacking" do
     bin_capacity = 100
@@ -18,33 +21,42 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
       |> Builder.reduce(items, fn {item, num_copies}, builder ->
         builder
         |> Builder.reduce(all_bins, fn bin, builder ->
+          var = "x_#{item}_#{bin}"
+
           builder
-          |> Builder.def_int_var("x_#{item}_#{bin}", {0, num_copies})
+          |> Builder.def_int_var(^var, {0, num_copies})
         end)
       end)
-      |> Builder.reduce(all_bins, &Builder.def_int_var(&2, "load_#{&1}", {0, bin_capacity}))
-      |> Builder.reduce(all_bins, &Builder.def_bool_var(&2, "slack_#{&1}"))
       |> Builder.reduce(all_bins, fn bin, builder ->
-        expr =
-          items
-          |> Enum.map(&{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
-          |> LinearExpression.terms()
+        load_bin = "load_#{bin}"
+        Builder.def_int_var(builder, ^load_bin, {0, bin_capacity})
+      end)
+      |> Builder.reduce(all_bins, fn bin, builder ->
+        slack_bin = "slack_#{bin}"
+        Builder.def_bool_var(builder, ^slack_bin)
+      end)
+      |> Builder.reduce(all_bins, fn bin, builder ->
+        expr = Enum.map(items, &{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
+        load_bin = "load_#{bin}"
 
         builder
-        |> Builder.constrain(expr, :==, "load_#{bin}")
+        |> Builder.constrain(sum(for {item, x} <- ^expr, do: ^item * ^x) == ^load_bin)
       end)
       |> Builder.reduce(items, fn {item, num_copies}, builder ->
         x_i = Enum.map(all_bins, &"x_#{item}_#{&1}")
 
         builder
-        |> Builder.constrain(LinearExpression.sum(x_i), :==, num_copies)
+        |> Builder.constrain(sum(^x_i) == ^num_copies)
       end)
       |> Builder.reduce(all_bins, fn bin, builder ->
         safe_capacity = bin_capacity - slack_capacity
 
+        load_bin = "load_#{bin}"
+        slack_bin = "slack_#{bin}"
+
         builder
-        |> Builder.constrain("load_#{bin}", :<=, safe_capacity, if: "slack_#{bin}")
-        |> Builder.constrain("load_#{bin}", :>, safe_capacity, unless: "slack_#{bin}")
+        |> Builder.constrain(^load_bin <= ^safe_capacity, if: ^slack_bin)
+        |> Builder.constrain(^load_bin > ^safe_capacity, unless: ^slack_bin)
       end)
       |> Builder.maximize(LinearExpression.sum(Enum.map(all_bins, &"slack_#{&1}")))
 
