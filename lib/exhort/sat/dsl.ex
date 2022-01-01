@@ -12,6 +12,12 @@ defmodule Exhort.SAT.DSL do
     transform(expression_ast)
   end
 
+  defp transform({:<<>>, _, _} = str) do
+    quote do
+      unquote(str)
+    end
+  end
+
   defp transform({:*, _, [x, y]}) do
     quote do
       LinearExpression.prod(unquote(transform(x)), unquote(transform(y)))

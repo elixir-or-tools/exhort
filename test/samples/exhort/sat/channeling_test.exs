@@ -1,10 +1,6 @@
 defmodule Samples.Exhort.SAT.Channeling do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.LinearExpression
-  alias Exhort.SAT.SolverResponse
-  alias Exhort.SAT.Model
+  use Exhort.SAT.Builder
 
   test "channeling" do
     builder =

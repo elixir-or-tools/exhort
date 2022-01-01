@@ -92,16 +92,12 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
-  @spec solve_nif(any()) :: {any(), integer()}
   def solve_nif(_cp_model_builder) do
     unimplemented().on_unimplemented()
-    {:ok, 1}
   end
 
-  @spec solve_with_callback_nif(any(), pid()) :: {any(), integer()}
   def solve_with_callback_nif(_cp_model_builder, _pid) do
     unimplemented().on_unimplemented()
-    {:ok, 1}
   end
 
   def solution_integer_value_nif(_cp_model_builder, _var) do
@@ -119,6 +115,10 @@ defmodule Exhort.NIF.Nif do
   end
 
   def minus_nif(_expr1, _expr2) do
+    unimplemented().on_unimplemented()
+  end
+
+  def prod_expr1_constant2_nif(_expr1, _int2) do
     unimplemented().on_unimplemented()
   end
 

@@ -15,11 +15,27 @@ defmodule Exhort.SAT.Builder do
   alias Exhort.SAT.BoolVar
   alias Exhort.SAT.Builder
   alias Exhort.SAT.Constraint
-  alias Exhort.SAT.IntVar
+  alias Exhort.SAT.DSL
   alias Exhort.SAT.IntervalVar
+  alias Exhort.SAT.IntVar
   alias Exhort.SAT.LinearExpression
   alias Exhort.SAT.Model
   alias Exhort.SAT.Vars
+
+  require __MODULE__
+
+  defmacro __using__(_options) do
+    quote do
+      alias Exhort.SAT.Builder
+      alias Exhort.SAT.LinearExpression
+      alias Exhort.SAT.Model
+      alias Exhort.SAT.SolverResponse
+
+      require Exhort.SAT.Builder
+      require Exhort.SAT.LinearExpression
+      require Exhort.SAT.SolverResponse
+    end
+  end
 
   @type t :: %__MODULE__{}
   defstruct res: nil, vars: %Vars{}, constraints: [], objectives: [], decision_strategy: nil
@@ -35,22 +51,33 @@ defmodule Exhort.SAT.Builder do
   @doc """
   Define a boolean variable in the model.
   """
-  @spec def_bool_var(Builder.t(), name :: atom() | String.t()) :: Builder.t()
-  def def_bool_var(%Builder{vars: vars} = builder, var) do
-    %Builder{builder | vars: Vars.add(vars, %BoolVar{name: var})}
+  defmacro def_bool_var(builder, name) do
+    name = DSL.transform_expression(name)
+
+    quote do
+      %Builder{vars: vars} = builder = unquote(builder)
+      %Builder{builder | vars: Vars.add(vars, %BoolVar{name: unquote(name)})}
+    end
   end
 
   @doc """
   Define an integer variable in the model.
 
-  - `var` is the variable name
+  - `name` is the variable name
   - `domain` is the uppper and lower bounds of the integer as a tuple,
     `{lower_bound, upper_bound}`
   """
-  @spec def_int_var(Builder.t(), name :: atom() | String.t(), domain :: {integer(), integer()}) ::
-          Builder.t()
-  def def_int_var(%Builder{vars: vars} = builder, var, domain) do
-    %Builder{builder | vars: Vars.add(vars, %IntVar{name: var, domain: domain})}
+  defmacro def_int_var(builder, name, domain) do
+    name = DSL.transform_expression(name)
+
+    quote do
+      %Builder{vars: vars} = builder = unquote(builder)
+
+      %Builder{
+        builder
+        | vars: Vars.add(vars, %IntVar{name: unquote(name), domain: unquote(domain)})
+      }
+    end
   end
 
   @doc """
@@ -63,27 +90,112 @@ defmodule Exhort.SAT.Builder do
   - `size` is the size of the interval
   - `stop` is the end of the interval
   """
-  @spec def_interval_var(
-          Builder.t(),
-          name :: atom() | String.t(),
-          start_literal :: atom() | String.t(),
-          size :: integer(),
-          stop_literal :: atom() | String.t()
-        ) ::
-          Builder.t()
-  def def_interval_var(%Builder{vars: vars} = builder, var, start, size, stop) do
-    %Builder{
-      builder
-      | vars: Vars.add(vars, %IntervalVar{name: var, start: start, size: size, stop: stop})
-    }
+
+  defmacro def_interval_var(builder, name, start, size, stop) do
+    name = DSL.transform_expression(name)
+    start = DSL.transform_expression(start)
+    size = DSL.transform_expression(size)
+    stop = DSL.transform_expression(stop)
+
+    quote do
+      %Builder{vars: vars} = builder = unquote(builder)
+
+      %Builder{
+        builder
+        | vars:
+            Vars.add(vars, %IntervalVar{
+              name: unquote(name),
+              start: unquote(start),
+              size: unquote(size),
+              stop: unquote(stop)
+            })
+      }
+    end
   end
 
   @doc """
-  Create a named constant.
+  Create a named constant. `value` should be a constant integer.
   """
-  @spec def_constant(Builder.t(), name :: atom() | String.t(), value :: integer()) :: Builder.t()
-  def def_constant(%Builder{vars: vars} = builder, name, value) do
-    %Builder{builder | vars: Vars.add(vars, %IntVar{name: name, domain: value})}
+  defmacro def_constant(builder, name, value) do
+    name = DSL.transform_expression(name)
+
+    quote do
+      %Builder{vars: vars} = builder = unquote(builder)
+
+      %Builder{
+        builder
+        | vars: Vars.add(vars, %IntVar{name: unquote(name), domain: unquote(value)})
+      }
+    end
+  end
+
+  @doc """
+  Define a bounded constraint.
+
+  The expression must include a boundary like `==`, `<=`, `>`, etc.
+
+  ```
+  x < y
+  ```
+
+  The components of the expressoin may be simple mathematical expressions,
+  including the use of `+` and `*`:
+
+  ```
+  x * y = z
+  ```
+
+  The `sum/1` function may be used to sum over a series of terms:
+
+  ```
+  sum(x + y) == z
+  ```
+
+  The variables in the expression are defined in the model and do not by default
+  reference the variables in Elixir scope. The pin operator, `^` may be used to
+  reference a scoped Elixir variable.
+
+  For example, where `x` is a model variable (e.g., `def_int_var(x, {0, 3}`))
+  and `y` is an Elixir variable (e.g., `y = 2`):
+
+  ```
+  x < ^y
+  ```
+
+  A `for` comprehension may be used to generate list values:
+
+  ```
+  sum(for {x, y} <- ^list, do: x * y) == z
+  ```
+
+  As a larger example:
+
+  ```
+  y = 20
+  z = [{0, 1}, {2, 3}, {4, 5}]
+
+  Builder.new()
+  |> Builder.def_int_var(x, {0, 3})
+  |> Builder.constrain(sum(for {a, b} <- ^z, do: ^a * ^b) < y)
+  |> Builder.build()
+  ...
+  ```
+  """
+  defmacro constrain(builder, expr, opts \\ []) do
+    {op, _, [lhs, rhs]} = expr
+    lhs = DSL.transform_expression(lhs)
+    rhs = DSL.transform_expression(rhs)
+    opts = Enum.map(opts, &DSL.transform_expression(&1))
+
+    quote do
+      %Builder{vars: vars} = builder = unquote(builder)
+
+      %Builder{
+        builder
+        | constraints:
+            builder.constraints ++ [{unquote(lhs), unquote(op), unquote(rhs), unquote(opts)}]
+      }
+    end
   end
 
   @doc """
@@ -110,9 +222,7 @@ defmodule Exhort.SAT.Builder do
           rhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
           opts :: [{:if, BoolVar.t()}] | [{:unless, BoolVar.t()}]
         ) :: Builder.t()
-  def constrain(builder, lhs, constraint, rhs, opts \\ [])
-
-  def constrain(%Builder{} = builder, lhs, constraint, rhs, opts) do
+  def constrain(%Builder{} = builder, lhs, constraint, rhs, opts \\ []) do
     %Builder{
       builder
       | constraints: builder.constraints ++ [{lhs, constraint, rhs, opts}]
@@ -148,11 +258,15 @@ defmodule Exhort.SAT.Builder do
   end
 
   @doc """
-  Specify an objective to maximize `literal`.
+  Specify an objective to maximize `expression`.
   """
-  @spec maximize(Builder.t(), literal :: atom() | String.t() | IntVar.t()) :: Builder.t()
-  def maximize(builder, literal) do
-    %Builder{builder | objectives: builder.objectives ++ [{:maximize, literal}]}
+  defmacro maximize(builder, expression) do
+    expression = DSL.transform_expression(expression)
+
+    quote do
+      %Builder{vars: vars} = builder = unquote(builder)
+      %Builder{builder | objectives: builder.objectives ++ [{:maximize, unquote(expression)}]}
+    end
   end
 
   @doc """

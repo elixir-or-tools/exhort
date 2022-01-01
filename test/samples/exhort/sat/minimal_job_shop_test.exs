@@ -1,8 +1,6 @@
 defmodule Samples.Exhort.SAT.MinimalJobShop do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.Model
+  use Exhort.SAT.Builder
 
   test "minimal jobshop" do
     # task = (machine_id, processing_time).
@@ -72,13 +70,13 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
 
           builder =
             builder
-            |> Builder.def_int_var(start_var, {0, horizon})
-            |> Builder.def_int_var(end_var, {0, horizon})
+            |> Builder.def_int_var(^start_var, {0, horizon})
+            |> Builder.def_int_var(^end_var, {0, horizon})
             |> Builder.def_interval_var(
-              interval_var,
-              start_var,
-              processing_time,
-              end_var
+              ^interval_var,
+              ^start_var,
+              ^processing_time,
+              ^end_var
             )
 
           %{

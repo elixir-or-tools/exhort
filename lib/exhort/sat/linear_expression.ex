@@ -62,6 +62,17 @@ defmodule Exhort.SAT.LinearExpression do
     |> then(&%LinearExpression{expr | res: &1})
   end
 
+  def resolve(
+        %LinearExpression{res: nil, expr: {:prod, %LinearExpression{} = expr1, int2}} = expr,
+        vars
+      )
+      when is_integer(int2) do
+    %LinearExpression{} = expr1 = resolve(expr1, vars)
+
+    Nif.prod_expr1_constant2_nif(expr1.res, int2)
+    |> then(&%LinearExpression{expr | res: &1, expr: {:prod, expr1, int2}})
+  end
+
   def resolve(%LinearExpression{res: nil, expr: {:prod, sym1, int2}} = expr, vars)
       when not is_integer(sym1) and is_integer(int2) do
     var1 = Vars.get(vars, sym1)

@@ -1,10 +1,6 @@
 defmodule Samples.Exhort.SAT.CpIsFun do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.LinearExpression
-  alias Exhort.SAT.SolverResponse
-  alias Exhort.SAT.Model
+  use Exhort.SAT.Builder
 
   test "CP is fun" do
     base = 10
@@ -28,17 +24,8 @@ defmodule Samples.Exhort.SAT.CpIsFun do
 
       # CP + IS + FUN = TRUE
       |> Builder.constrain(
-        LinearExpression.prod(
-          ["c", "p", "i", "s", "f", "u", "n"],
-          [base, 1, base, 1, base * base, base, 1]
-        ),
-        :==,
-        LinearExpression.prod(["t", "r", "u", "e"], [
-          base * base * base,
-          base * base,
-          base,
-          1
-        ])
+        "c" * ^base + "p" + "i" * ^base + "s" + "f" * ^base * ^base + "u" * ^base + "n" ==
+          "t" * ^base * ^base * ^base + "r" * ^base * ^base + "u" * ^base + "e"
       )
 
     solution_callback = fn %SolverResponse{} = _response, acc ->

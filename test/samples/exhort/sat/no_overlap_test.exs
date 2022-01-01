@@ -1,8 +1,6 @@
 defmodule Samples.Exhort.SAT.NoOverlap do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.Model
+  use Exhort.SAT.Builder
 
   test "no overlap" do
     horizon = 21

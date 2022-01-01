@@ -1,10 +1,6 @@
 defmodule Samples.Exhort.SAT.EarlinessTardinessCostTest do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.LinearExpression
-  alias Exhort.SAT.Model
-  alias Exhort.SAT.SolverResponse
+  use Exhort.SAT.Builder
 
   test "earliness tardiness" do
     earliness_date = 5

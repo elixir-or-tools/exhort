@@ -1,9 +1,6 @@
 defmodule Samples.Exhort.SAT.NurseScheduling do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.LinearExpression
-  alias Exhort.SAT.Model
+  use Exhort.SAT.Builder
 
   test "nurse scheduling" do
     num_nurses = 5
@@ -97,7 +94,9 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
           end)
         end)
       end)
-      |> then(&Builder.maximize(builder, LinearExpression.sum(&1)))
+      |> then(fn list ->
+        Builder.maximize(builder, sum(^list))
+      end)
 
     solver =
       builder

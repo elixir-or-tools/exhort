@@ -1,10 +1,6 @@
 defmodule Samples.Exhort.SAT.Zebra do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.LinearExpression
-  alias Exhort.SAT.SolverResponse
-  alias Exhort.SAT.Model
+  use Exhort.SAT.Builder
 
   test "zebra" do
     builder =
@@ -96,11 +92,11 @@ defmodule Samples.Exhort.SAT.Zebra do
       people = ["englishman", "spaniard", "japanese", "ukrainian", "norwegian"]
 
       assert Enum.find(people, fn p ->
-               SolverResponse.int_val(response, p) == SolverResponse.int_val(response, "water")
+               SolverResponse.int_val(response, ^p) == SolverResponse.int_val(response, "water")
              end)
 
       assert Enum.find(people, fn p ->
-               SolverResponse.int_val(response, p) == SolverResponse.int_val(response, "zebra")
+               SolverResponse.int_val(response, ^p) == SolverResponse.int_val(response, "zebra")
              end)
     end
   end

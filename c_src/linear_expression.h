@@ -8,6 +8,8 @@ extern "C"
 {
   int load_linear_expression(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info);
 
+  ERL_NIF_TERM prod_expr1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
   ERL_NIF_TERM prod_bool_var1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM prod_int_var1_constant2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);

@@ -1,9 +1,6 @@
 defmodule Exhort.SAT.BuilderTest do
   use ExUnit.Case
-
-  alias Exhort.SAT.Builder
-  alias Exhort.SAT.Model
-  alias Exhort.SAT.SolverResponse
+  use Exhort.SAT.Builder
 
   test "new int var" do
     model = Builder.new()

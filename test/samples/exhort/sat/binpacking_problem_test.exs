@@ -1,12 +1,6 @@
 defmodule Samples.Exhort.SAT.BinpackingProblem do
   use ExUnit.Case
-
-  alias Exhort.SAT.ExpressionBuilder, as: Builder
-  alias Exhort.SAT.LinearExpression
-  alias Exhort.SAT.Model
-
-  require Builder
-  require LinearExpression
+  use Exhort.SAT.Builder
 
   test "binpacking" do
     bin_capacity = 100
@@ -58,7 +52,10 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
         |> Builder.constrain(^load_bin <= ^safe_capacity, if: ^slack_bin)
         |> Builder.constrain(^load_bin > ^safe_capacity, unless: ^slack_bin)
       end)
-      |> Builder.maximize(LinearExpression.sum(Enum.map(all_bins, &"slack_#{&1}")))
+      |> then(fn builder ->
+        bins = Enum.map(all_bins, &"slack_#{&1}")
+        Builder.maximize(builder, sum(^bins))
+      end)
 
     assert :optimal ==
              builder

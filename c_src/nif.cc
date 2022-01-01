@@ -52,6 +52,7 @@ extern "C"
       {"solution_integer_value_nif", 2, solution_integer_value_nif},
       {"solve_nif", 1, solve_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
       {"solve_with_callback_nif", 2, solve_with_callback_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
+      {"prod_expr1_constant2_nif", 2, prod_expr1_constant2_nif},
       {"prod_bool_var1_constant2_nif", 2, prod_bool_var1_constant2_nif},
       {"prod_int_var1_constant2_nif", 2, prod_int_var1_constant2_nif},
       {"sum_nif", 1, sum_nif},
