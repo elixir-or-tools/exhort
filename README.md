@@ -67,15 +67,18 @@ creating the model using the `build` function.
 The result of the `build` function is a `Model`.
 
 ```elixir
+  use Exhort.SAT.Builder
+  ...
+
     builder =
       Builder.new()
-      |> Builder.def_int_var(:x, {0, 10})
-      |> Builder.def_int_var(:y, {0, 10})
-      |> Builder.def_bool_var(:b)
-      |> Builder.constrain(:x, :>=, 5, if: :b)
-      |> Builder.constrain(:x, :<=, 5, unless: :b)
-      |> Builder.constrain(LinearExpression.sum(:x, :y), :==, 10, if: :b)
-      |> Builder.constrain(:y, :==, 0, unless: :b)
+      |> Builder.def_int_var(x, {0, 10})
+      |> Builder.def_int_var(y, {0, 10})
+      |> Builder.def_bool_var(b)
+      |> Builder.constrain(x >= 5, if: b)
+      |> Builder.constrain(x <= 5, unless: b)
+      |> Builder.constrain(x + y == 10, if: b)
+      |> Builder.constrain(y == 0, unless: b)
 
     {response, acc} =
       builder
@@ -92,16 +95,64 @@ The result of the `build` function is a `Model`.
     # :optimal
     response.status |> IO.inspect(label: "satus: ")
     # 10, 0, true
-    SolverResponse.int_val(response, :x) |> IO.inspect(label: "x: ")
-    SolverResponse.int_val(response, :y) |> IO.inspect(label: "y: ")
-    SolverResponse.bool_val(response, :b) |> IO.inspect(label: "b: ")
+    SolverResponse.int_val(response, x) |> IO.inspect(label: "x: ")
+    SolverResponse.int_val(response, y) |> IO.inspect(label: "y: ")
+    SolverResponse.bool_val(response, b) |> IO.inspect(label: "b: ")
 ```
 
 ### Variables
 
-Model variables are symbolic and may be either atoms or strings. This allows the
-variables to be consistently referenced through a builder pipeline, for example,
-without having to capture an intermediate result.
+Model variables are symbolic and don't leak to the surrounding Elixir context.
+This allows the variables to be consistently referenced through a builder
+pipeline, for example, without having to capture an intermediate result.
+
+To reference an Elixir value from an Exhort expression, pin it like you would in
+Ecto using `^`.
+
+In the following expression, `x` is a model variable, while `y` is an Elixir
+variable:
+
+```elixir
+x < ^y + 3
+```
+
+Strings and atoms are also supported for variable names, which is often valuable
+when names are generated:
+
+```elixir
+    builder
+    |> Builder.reduce(all_bins, fn bin, builder ->
+      Builder.def_bool_var(builder, "slack_#{bin}")
+    end)
+```
+
+Note the use of `Builder.reduce/3` here. That function delegates to
+`Enum.reduce`, but uses the `%Builder{}` as its first argument, making it
+convenient for pipelining.
+
+Of course, such names are still usable in expressions:
+
+```elixir
+    builder
+    |> Builder.constrain("slack_#{bin}" <= ^bin_total)
+```
+
+### Expressions
+
+Exhort supports a limited set of expressions. Expressions may use a comparison
+operator (`<`, `<=`, `==`, `>=`, `>`), the `sum` function and even the `for`
+comprehension.
+
+```elixir
+    builder
+    |> Builder.reduce(all_bins, fn bin, builder ->
+      expr = Enum.map(items, &{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
+      load_bin = "load_#{bin}"
+
+      builder
+      |> Builder.constrain(sum(for {item, x} <- ^expr, do: ^item * ^x) == ^load_bin)
+    end)
+```
 
 ### Model
 
@@ -115,7 +166,8 @@ solutions from the solver.
 
 ## Implementation
 
-Exhort relies on the underlying native C++ implementation of the Google OR Tools.
+Exhort relies on the underlying native C++ implementation of the Google OR
+Tools.
 
 References to the native objects are returned via NIF resources to the Elixir
 runtime as `%Reference{}` values. These are often stored in corresponding Exhort
