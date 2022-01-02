@@ -603,7 +603,7 @@ extern "C"
       return enif_make_badarg(env);
     }
 
-    std::vector<IntVar> vars;
+    std::vector<LinearExpr> vars;
     ERL_NIF_TERM head;
     ERL_NIF_TERM tail;
     ERL_NIF_TERM current = argv[1];
@@ -614,8 +614,8 @@ extern "C"
         return enif_make_badarg(env);
       }
 
-      IntVarWrapper *var;
-      if (!get_int_var(env, head, &var))
+      LinearExprWrapper *var;
+      if (!get_linear_expression(env, head, &var))
       {
         return enif_make_badarg(env);
       }

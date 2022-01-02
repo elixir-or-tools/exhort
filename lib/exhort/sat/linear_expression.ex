@@ -154,14 +154,16 @@ defmodule Exhort.SAT.LinearExpression do
 
   def resolve(%LinearExpression{} = expr, _vars), do: expr
 
-  def resolve(%BoolVar{} = var, _vars) do
+  def resolve(%BoolVar{} = var, vars) do
     var
+    |> then(&Vars.get(vars, &1))
     |> then(&Nif.expr_from_bool_var_nif(&1.res))
     |> then(&%LinearExpression{res: &1, expr: var})
   end
 
-  def resolve(%IntVar{} = var, _vars) do
+  def resolve(%IntVar{} = var, vars) do
     var
+    |> then(&Vars.get(vars, &1))
     |> then(&Nif.expr_from_int_var_nif(&1.res))
     |> then(&%LinearExpression{res: &1, expr: var})
   end

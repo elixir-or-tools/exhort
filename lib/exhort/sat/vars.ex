@@ -23,7 +23,9 @@ defmodule Exhort.SAT.Vars do
   @doc """
   Get a variable by name.
   """
-  @spec get(Vars.t(), name :: atom() | String.t()) :: nil | any()
+  @spec get(Vars.t(), name :: atom() | String.t() | map()) :: nil | any()
+  def get(%Vars{map: map} = vars, %{name: name}), do: get(vars, name)
+
   def get(%Vars{map: map} = _vars, name) do
     case Map.get(map, name) do
       nil -> raise "Undefined variable: #{inspect(name)}"
