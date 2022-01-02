@@ -5,7 +5,7 @@ defmodule Exhort.SAT.Constraint do
   The binary constraints are:
 
   ```
-  :< | :<= | :== | :!= | :>= | :> | :"abs=="
+  :< | :<= | :== | :>= | :> | :"abs=="
   ```
 
   The list constraints are:
@@ -14,7 +14,7 @@ defmodule Exhort.SAT.Constraint do
   :"all!=" | :no_overlap
   ```
   """
-  @type constraint :: :< | :<= | :== | :!= | :>= | :> | :"abs==" | :"all!=" | :no_overlap
+  @type constraint :: :< | :<= | :== | :>= | :> | :"abs==" | :"all!=" | :no_overlap
 
   @type t :: %__MODULE__{}
   defstruct [:res, :defn]

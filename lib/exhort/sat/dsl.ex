@@ -30,6 +30,12 @@ defmodule Exhort.SAT.DSL do
     end
   end
 
+  defp transform({:-, _, [x, y]}) do
+    quote do
+      LinearExpression.minus(unquote(transform(x)), unquote(transform(y)))
+    end
+  end
+
   defp transform({:sum, _, [args]}) do
     quote do
       LinearExpression.sum(unquote(transform(args)))

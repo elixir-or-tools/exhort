@@ -47,38 +47,30 @@ defmodule Samples.Exhort.SAT.Zebra do
         "lucky strike",
         "old gold"
       ])
-      |> Builder.constrain("englishman", :==, "red")
-      |> Builder.constrain("spaniard", :==, "dog")
-      |> Builder.constrain("coffee", :==, "green")
-      |> Builder.constrain("ukrainian", :==, "tea")
-      |> Builder.constrain("green", :==, LinearExpression.sum("ivory", 1))
-      |> Builder.constrain("old gold", :==, "snails")
-      |> Builder.constrain("kools", :==, "yellow")
-      |> Builder.constrain("milk", :==, 3)
-      |> Builder.constrain("norwegian", :==, 1)
+      |> Builder.constrain("englishman" == "red")
+      |> Builder.constrain("spaniard" == "dog")
+      |> Builder.constrain("coffee" == "green")
+      |> Builder.constrain("ukrainian" == "tea")
+      |> Builder.constrain("green" == "ivory" + 1)
+      |> Builder.constrain("old gold" == "snails")
+      |> Builder.constrain("kools" == "yellow")
+      |> Builder.constrain("milk" == 3)
+      |> Builder.constrain("norwegian" == 1)
       |> Builder.def_int_var("diff_fox_chesterfields", {-4, 4})
       |> Builder.constrain(
         "diff_fox_chesterfields",
         :==,
         LinearExpression.minus("fox", "chesterfields")
       )
-      |> Builder.constrain(1, :"abs==", "diff_fox_chesterfields")
+      |> Builder.constrain(1 == abs("diff_fox_chesterfields"))
       |> Builder.def_int_var("diff_horse_kools", {-4, 4})
-      |> Builder.constrain(
-        "diff_horse_kools",
-        :==,
-        LinearExpression.minus("horse", "kools")
-      )
-      |> Builder.constrain(1, :"abs==", "diff_horse_kools")
-      |> Builder.constrain("lucky strike", :==, "fruit juice")
-      |> Builder.constrain("japanese", :==, "parliaments")
+      |> Builder.constrain("diff_horse_kools" == "horse" - "kools")
+      |> Builder.constrain(1 == abs("diff_horse_kools"))
+      |> Builder.constrain("lucky strike" == "fruit juice")
+      |> Builder.constrain("japanese" == "parliaments")
       |> Builder.def_int_var("diff_norwegian_blue", {-4, 4})
-      |> Builder.constrain(
-        "diff_norwegian_blue",
-        :==,
-        LinearExpression.minus("norwegian", "blue")
-      )
-      |> Builder.constrain(1, :"abs==", "diff_norwegian_blue")
+      |> Builder.constrain("diff_norwegian_blue" == "norwegian" - "blue")
+      |> Builder.constrain(1 == abs("diff_norwegian_blue"))
 
     # Solve and print out the solution.
     response =

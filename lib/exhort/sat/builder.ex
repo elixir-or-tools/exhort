@@ -182,13 +182,22 @@ defmodule Exhort.SAT.Builder do
   ```
   """
   defmacro constrain(builder, expr, opts \\ []) do
+    expr =
+      case expr do
+        {:==, m1, [lhs, {:abs, _m2, [var]}]} ->
+          {:"abs==", m1, [lhs, var]}
+
+        expr ->
+          expr
+      end
+
     {op, _, [lhs, rhs]} = expr
     lhs = DSL.transform_expression(lhs)
     rhs = DSL.transform_expression(rhs)
     opts = Enum.map(opts, &DSL.transform_expression(&1))
 
     quote do
-      %Builder{vars: vars} = builder = unquote(builder)
+      %Builder{} = builder = unquote(builder)
 
       %Builder{
         builder
