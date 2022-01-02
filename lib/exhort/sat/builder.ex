@@ -397,6 +397,7 @@ defmodule Exhort.SAT.Builder do
           builder |> add_abs_equal(Vars.get(vars, lhs), Vars.get(vars, rhs)) |> modify(opts, vars)
 
         {:"all!=", list, opts} ->
+          list = Enum.map(list, &LinearExpression.resolve(&1, vars))
           builder |> add_all_different(list) |> modify(opts, vars)
 
         {:no_overlap, list, opts} ->
@@ -492,10 +493,7 @@ defmodule Exhort.SAT.Builder do
 
   defp add_all_different(%Builder{res: builder_res, vars: vars} = _builder, list) do
     list
-    |> Enum.map(fn var ->
-      Vars.get(vars, var)
-      |> then(& &1.res)
-    end)
+    |> Enum.map(& &1.res)
     |> then(fn var_list ->
       Nif.add_all_different_nif(builder_res, var_list)
     end)
