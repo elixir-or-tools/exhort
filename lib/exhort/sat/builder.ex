@@ -500,7 +500,7 @@ defmodule Exhort.SAT.Builder do
     Nif.add_abs_equal_constant_nif(cp_model_builder.res, int1, var2.res)
   end
 
-  defp add_all_different(%Builder{res: builder_res, vars: vars} = _builder, list) do
+  defp add_all_different(%Builder{res: builder_res} = _builder, list) do
     list
     |> Enum.map(& &1.res)
     |> then(fn var_list ->
