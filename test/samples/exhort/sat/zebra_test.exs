@@ -80,16 +80,14 @@ defmodule Samples.Exhort.SAT.Zebra do
 
     assert response.status == :optimal
 
-    if response.status == :optimal do
-      people = ["englishman", "spaniard", "japanese", "ukrainian", "norwegian"]
+    people = ["englishman", "spaniard", "japanese", "ukrainian", "norwegian"]
 
-      assert Enum.find(people, fn p ->
-               SolverResponse.int_val(response, ^p) == SolverResponse.int_val(response, "water")
-             end)
+    assert Enum.find(people, fn p ->
+             SolverResponse.int_val(response, ^p) == SolverResponse.int_val(response, "water")
+           end)
 
-      assert Enum.find(people, fn p ->
-               SolverResponse.int_val(response, ^p) == SolverResponse.int_val(response, "zebra")
-             end)
-    end
+    assert Enum.find(people, fn p ->
+             SolverResponse.int_val(response, ^p) == SolverResponse.int_val(response, "zebra")
+           end)
   end
 end

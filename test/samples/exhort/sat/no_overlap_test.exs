@@ -50,5 +50,8 @@ defmodule Samples.Exhort.SAT.NoOverlap do
       |> Model.solve()
 
     assert :optimal == response.status
+    assert 0 == SolverResponse.int_val(response, "start_0")
+    assert 7 == SolverResponse.int_val(response, "start_1")
+    assert 2 == SolverResponse.int_val(response, "start_2")
   end
 end

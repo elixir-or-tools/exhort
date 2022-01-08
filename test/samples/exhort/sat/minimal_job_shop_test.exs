@@ -125,10 +125,47 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
       )
       |> Builder.minimize("makespan")
 
-    assert :optimal ==
-             builder
-             |> Builder.build()
-             |> Model.solve()
-             |> then(& &1.status)
+    response =
+      builder
+      |> Builder.build()
+      |> Model.solve()
+
+    assert :optimal == response.status
+
+    assert %{
+             "Machine: 0" => %{"0_0" => {2, 5}, "1_0" => {0, 2}},
+             "Machine: 1" => %{"0_1" => {5, 7}, "1_2" => {7, 11}, "2_0" => {0, 4}},
+             "Machine: 2" => %{"0_2" => {7, 9}, "1_1" => {2, 3}, "2_1" => {4, 7}}
+           } =
+             jobs_data
+             |> Enum.with_index()
+             |> Enum.map(fn {job, job_id} ->
+               job
+               |> Enum.with_index()
+               |> Enum.map(fn {{machine_id, _processing_time}, task_id} ->
+                 suffix = "#{job_id}_#{task_id}"
+                 start_var = "start_#{suffix}"
+                 end_var = "end_#{suffix}"
+
+                 {
+                   "Machine: #{machine_id}",
+                   {suffix, SolverResponse.int_val(response, ^start_var),
+                    SolverResponse.int_val(response, ^end_var)}
+                 }
+               end)
+             end)
+             |> List.flatten()
+             |> Enum.group_by(fn {machine, _} -> machine end)
+             |> Enum.map(fn {machine, jobs} ->
+               {
+                 machine,
+                 jobs
+                 |> Enum.map(fn {_machine, {id, task_start, task_end}} ->
+                   {id, {task_start, task_end}}
+                 end)
+                 |> Enum.into(%{})
+               }
+             end)
+             |> Enum.into(%{})
   end
 end
