@@ -131,6 +131,7 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
       |> Model.solve()
 
     assert :optimal == response.status
+    assert 11.0 == response.objective
 
     assert %{
              "Machine: 0" => %{"0_0" => {2, 5}, "1_0" => {0, 2}},
