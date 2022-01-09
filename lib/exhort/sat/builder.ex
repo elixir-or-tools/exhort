@@ -26,12 +26,16 @@ defmodule Exhort.SAT.Builder do
 
   defmacro __using__(_options) do
     quote do
+      alias Exhort.SAT.BoolVar
       alias Exhort.SAT.Builder
+      alias Exhort.SAT.Constraint
+      alias Exhort.SAT.IntVar
       alias Exhort.SAT.LinearExpression
       alias Exhort.SAT.Model
       alias Exhort.SAT.SolverResponse
 
       require Exhort.SAT.Builder
+      require Exhort.SAT.Constraint
       require Exhort.SAT.LinearExpression
       require Exhort.SAT.SolverResponse
     end
@@ -46,6 +50,26 @@ defmodule Exhort.SAT.Builder do
   @spec new() :: Builder.t()
   def new do
     %Builder{}
+  end
+
+  @doc """
+  Add an item or list of items to the builder.
+  """
+  @spec add(Builder.t(), list() | BoolVar.t() | IntVar.t() | Constraint.t()) :: Builder.t()
+  def add(builder, list) when is_list(list) do
+    Enum.reduce(list, builder, &add(&2, &1))
+  end
+
+  def add(%Builder{vars: vars} = builder, %BoolVar{} = var) do
+    %Builder{builder | vars: Vars.add(vars, var)}
+  end
+
+  def add(%Builder{vars: vars} = builder, %IntVar{} = var) do
+    %Builder{builder | vars: Vars.add(vars, var)}
+  end
+
+  def add(%Builder{constraints: constraints} = builder, %Constraint{defn: defn}) do
+    %Builder{builder | constraints: constraints ++ [defn]}
   end
 
   @doc """

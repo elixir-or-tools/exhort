@@ -10,57 +10,79 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
 
     items = [{20, 6}, {15, 6}, {30, 4}, {45, 3}]
 
-    builder =
-      Builder.new()
-      |> Builder.reduce(items, fn {item, num_copies}, builder ->
-        builder
-        |> Builder.reduce(all_bins, fn bin, builder ->
-          var = "x_#{item}_#{bin}"
-
-          builder
-          |> Builder.def_int_var(^var, {0, num_copies})
+    xs =
+      items
+      |> Enum.map(fn {item, num_copies} ->
+        all_bins
+        |> Enum.map(fn bin ->
+          IntVar.new("x_#{item}_#{bin}", {0, num_copies})
         end)
       end)
-      |> Builder.reduce(all_bins, fn bin, builder ->
-        load_bin = "load_#{bin}"
-        Builder.def_int_var(builder, ^load_bin, {0, bin_capacity})
+      |> List.flatten()
+
+    loads =
+      all_bins
+      |> Enum.map(fn bin ->
+        IntVar.new("load_#{bin}", {0, bin_capacity})
       end)
-      |> Builder.reduce(all_bins, fn bin, builder ->
-        slack_bin = "slack_#{bin}"
-        Builder.def_bool_var(builder, ^slack_bin)
+
+    slacks =
+      all_bins
+      |> Enum.map(fn bin ->
+        BoolVar.new("slack_#{bin}")
       end)
-      |> Builder.reduce(all_bins, fn bin, builder ->
+
+    constrain_load_to_x =
+      all_bins
+      |> Enum.map(fn bin ->
         expr = Enum.map(items, &{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
         load_bin = "load_#{bin}"
 
-        builder
-        |> Builder.constrain(sum(for {item, x} <- ^expr, do: ^item * ^x) == ^load_bin)
+        Constraint.new(sum(for {item, x} <- ^expr, do: ^item * ^x) == ^load_bin)
       end)
-      |> Builder.reduce(items, fn {item, num_copies}, builder ->
+
+    placements =
+      items
+      |> Enum.map(fn {item, num_copies} ->
         x_i = Enum.map(all_bins, &"x_#{item}_#{&1}")
 
-        builder
-        |> Builder.constrain(sum(^x_i) == ^num_copies)
+        Constraint.new(sum(^x_i) == ^num_copies)
       end)
-      |> Builder.reduce(all_bins, fn bin, builder ->
+
+    constrain_load_to_slack =
+      all_bins
+      |> Enum.map(fn bin ->
         safe_capacity = bin_capacity - slack_capacity
 
         load_bin = "load_#{bin}"
         slack_bin = "slack_#{bin}"
 
-        builder
-        |> Builder.constrain(^load_bin <= ^safe_capacity, if: ^slack_bin)
-        |> Builder.constrain(^load_bin > ^safe_capacity, unless: ^slack_bin)
+        [
+          Constraint.new(^load_bin <= ^safe_capacity, if: ^slack_bin),
+          Constraint.new(^load_bin > ^safe_capacity, unless: ^slack_bin)
+        ]
       end)
+      |> List.flatten()
+
+    builder =
+      Builder.new()
+      |> Builder.add(xs)
+      |> Builder.add(loads)
+      |> Builder.add(slacks)
+      |> Builder.add(constrain_load_to_x)
+      |> Builder.add(placements)
+      |> Builder.add(constrain_load_to_slack)
       |> then(fn builder ->
         bins = Enum.map(all_bins, &"slack_#{&1}")
         Builder.maximize(builder, sum(^bins))
       end)
 
-    assert :optimal ==
-             builder
-             |> Builder.build()
-             |> Model.solve()
-             |> then(& &1.status)
+    response =
+      builder
+      |> Builder.build()
+      |> Model.solve()
+
+    assert :optimal == response.status
+    assert 1 == response.objective
   end
 end
