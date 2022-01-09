@@ -3,6 +3,9 @@ defmodule Exhort.SAT.LinearExpression do
   An expression in terms of variables and operators, constraining the overall
   model.
 
+  Expressions should be defined through `Exhort.SAT.Constraint` or
+  `Exhort.SAT.Builder`.
+
   The approach here is to transform values into `LinearExpression`s and then
   apply the operator (e.g., `:sum`) to the expressions. This allows for fewer
   NIF functions do the combination of the number of arguments.

@@ -68,8 +68,8 @@ defmodule Exhort.SAT.Builder do
     %Builder{builder | vars: Vars.add(vars, var)}
   end
 
-  def add(%Builder{constraints: constraints} = builder, %Constraint{defn: defn}) do
-    %Builder{builder | constraints: constraints ++ [defn]}
+  def add(%Builder{constraints: constraints} = builder, %Constraint{} = constraint) do
+    %Builder{builder | constraints: constraints ++ [constraint]}
   end
 
   @doc """
@@ -154,6 +154,8 @@ defmodule Exhort.SAT.Builder do
   end
 
   @doc """
+  See `Exhort.SAT.Constraint`.
+
   Define a bounded constraint.
 
   The expression must include a boundary like `==`, `<=`, `>`, etc.
@@ -226,7 +228,8 @@ defmodule Exhort.SAT.Builder do
       %Builder{
         builder
         | constraints:
-            builder.constraints ++ [{unquote(lhs), unquote(op), unquote(rhs), unquote(opts)}]
+            builder.constraints ++
+              [%Constraint{defn: {unquote(lhs), unquote(op), unquote(rhs), unquote(opts)}}]
       }
     end
   end
@@ -258,7 +261,7 @@ defmodule Exhort.SAT.Builder do
   def constrain(%Builder{} = builder, lhs, constraint, rhs, opts \\ []) do
     %Builder{
       builder
-      | constraints: builder.constraints ++ [{lhs, constraint, rhs, opts}]
+      | constraints: builder.constraints ++ [%Constraint{defn: {lhs, constraint, rhs, opts}}]
     }
   end
 
@@ -270,7 +273,10 @@ defmodule Exhort.SAT.Builder do
   @spec constrain_list(Builder.t(), Constraint.constraint(), list(), opts :: Keyword.t()) ::
           Builder.t()
   def constrain_list(%Builder{} = builder, constraint, list, opts \\ []) do
-    %Builder{builder | constraints: builder.constraints ++ [{constraint, list, opts}]}
+    %Builder{
+      builder
+      | constraints: builder.constraints ++ [%Constraint{defn: {constraint, list, opts}}]
+    }
   end
 
   @doc """
@@ -393,48 +399,62 @@ defmodule Exhort.SAT.Builder do
     constraints =
       builder.constraints
       |> Enum.map(fn
-        {lhs, :==, rhs, opts} ->
+        %Constraint{defn: {lhs, :==, rhs, opts}} = constraint ->
           lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          builder |> add_equal(lhs, rhs) |> modify(opts, vars)
+          res = builder |> add_equal(lhs, rhs) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {lhs, :!=, rhs, opts} ->
+        %Constraint{defn: {lhs, :!=, rhs, opts}} = constraint ->
           lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          builder |> add_not_equal(lhs, rhs) |> modify(opts, vars)
+          res = builder |> add_not_equal(lhs, rhs) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {lhs, :>, rhs, opts} ->
+        %Constraint{defn: {lhs, :>, rhs, opts}} = constraint ->
           lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          builder |> add_greater_than(lhs, rhs) |> modify(opts, vars)
+          res = builder |> add_greater_than(lhs, rhs) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {lhs, :>=, rhs, opts} ->
+        %Constraint{defn: {lhs, :>=, rhs, opts}} = constraint ->
           lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          builder |> add_greater_or_equal(lhs, rhs) |> modify(opts, vars)
+          res = builder |> add_greater_or_equal(lhs, rhs) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {lhs, :<, rhs, opts} ->
+        %Constraint{defn: {lhs, :<, rhs, opts}} = constraint ->
           lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          builder |> add_less_than(lhs, rhs) |> modify(opts, vars)
+          res = builder |> add_less_than(lhs, rhs) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {lhs, :<=, rhs, opts} ->
+        %Constraint{defn: {lhs, :<=, rhs, opts}} = constraint ->
           lhs = LinearExpression.resolve(lhs, vars)
           rhs = LinearExpression.resolve(rhs, vars)
-          builder |> add_less_or_equal(lhs, rhs) |> modify(opts, vars)
+          res = builder |> add_less_or_equal(lhs, rhs) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {lhs, :"abs==", rhs, opts} when is_integer(lhs) ->
-          builder |> add_abs_equal(lhs, Vars.get(vars, rhs)) |> modify(opts, vars)
+        %Constraint{defn: {lhs, :"abs==", rhs, opts}} = constraint when is_integer(lhs) ->
+          res = builder |> add_abs_equal(lhs, Vars.get(vars, rhs)) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {lhs, :"abs==", rhs, opts} ->
-          builder |> add_abs_equal(Vars.get(vars, lhs), Vars.get(vars, rhs)) |> modify(opts, vars)
+        %Constraint{defn: {lhs, :"abs==", rhs, opts}} = constraint ->
+          res =
+            builder
+            |> add_abs_equal(Vars.get(vars, lhs), Vars.get(vars, rhs))
+            |> modify(opts, vars)
 
-        {:"all!=", list, opts} ->
+          %Constraint{constraint | res: res}
+
+        %Constraint{defn: {:"all!=", list, opts}} = constraint ->
           list = Enum.map(list, &LinearExpression.resolve(&1, vars))
-          builder |> add_all_different(list) |> modify(opts, vars)
+          res = builder |> add_all_different(list) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
 
-        {:no_overlap, list, opts} ->
-          builder |> add_no_overlap(list) |> modify(opts, vars)
+        %Constraint{defn: {:no_overlap, list, opts}} = constraint ->
+          res = builder |> add_no_overlap(list) |> modify(opts, vars)
+          %Constraint{constraint | res: res}
       end)
 
     builder = %Builder{builder | constraints: constraints}
