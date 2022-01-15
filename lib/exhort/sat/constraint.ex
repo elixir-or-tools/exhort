@@ -94,4 +94,39 @@ defmodule Exhort.SAT.Constraint do
       %Constraint{defn: {unquote(lhs), unquote(op), unquote(rhs), unquote(opts)}}
     end
   end
+
+  @doc """
+  Define a constraint on the model using variables.
+
+  - `constraint` is specified as an atom. See `Exhort.SAT.Constraint`.
+  - `lhs` and `rhs` may each either be an atom, string, `LinearExpression`, or
+    an existing `BoolVar` or `IntVar`.
+  - `opts` may specify a restriction on the constraint:
+      - `if: BoolVar` specifies that a constraint only takes effect if `BoolVar`
+        is true
+      - `unless: BoolVar` specifies that a constraint only takes effect if
+        `BoolVar` is false
+
+  - `:==` - `lhs == rhs`
+  - `:abs==` - `lhs == abs(rhs)`
+  - `:"all!="` - Require each element the provide list has a different value
+    from all the rest
+  """
+  @spec constrain(
+          lhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
+          constraint :: Constraint.constraint(),
+          rhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
+          opts :: [{:if, BoolVar.t()}] | [{:unless, BoolVar.t()}]
+        ) :: Builder.t()
+  def constrain(lhs, constraint, rhs, opts \\ []) do
+    %Constraint{defn: {lhs, constraint, rhs, opts}}
+  end
+
+  def no_overlap(list, opts \\ []) do
+    %Constraint{defn: {:no_overlap, list, opts}}
+  end
+
+  def all_different(list, opts \\ []) do
+    %Constraint{defn: {:"all!=", list, opts}}
+  end
 end

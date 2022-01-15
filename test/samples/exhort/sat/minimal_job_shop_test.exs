@@ -13,12 +13,6 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
       [{1, 4}, {2, 3}]
     ]
 
-    all_machines =
-      jobs_data
-      |> List.flatten()
-      |> Enum.map(&elem(&1, 0))
-      |> Enum.uniq()
-
     # Computes horizon dynamically as the sum of all durations.
     horizon =
       jobs_data
@@ -26,101 +20,102 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
       |> Enum.map(&elem(&1, 1))
       |> Enum.sum()
 
-    all_tasks = %{}
-    machine_to_intervals = %{}
-
-    acc = %{
-      builder: Builder.new(),
-      machine_to_intervals: machine_to_intervals,
-      all_tasks: all_tasks
-    }
-
-    %{
-      builder: builder,
-      machine_to_intervals: machine_to_intervals,
-      all_tasks: all_tasks
-    } =
+    # [
+    #   {0, [{0, {0, 3}}, {1, {1, 2}}, {2, {2, 2}}]},
+    #   {1, [{0, {0, 2}}, {1, {2, 1}}, {2, {1, 4}}]},
+    #   {2, [{0, {1, 4}}, {1, {2, 3}}]}
+    # ]
+    jobs =
       jobs_data
       |> Enum.with_index()
-      |> Enum.reduce(acc, fn {job, job_id}, acc ->
+      |> Enum.map(fn {job, job_id} ->
+        {
+          job_id,
+          job
+          |> Enum.with_index()
+          |> Enum.map(fn {{machine_id, processing_time}, task_id} ->
+            {task_id, {machine_id, processing_time}}
+          end)
+        }
+      end)
+
+    # %{{job_id, task_id} => %{machine: _, start: _, processing_time: _, end: _, interval: _}}
+    tasks =
+      jobs
+      |> Enum.map(fn {job_id, job} ->
         job
-        |> Enum.with_index()
-        |> Enum.reduce(acc, fn {{machine_id, processing_time}, task_id},
-                               %{
-                                 builder: builder,
-                                 machine_to_intervals: machine_to_intervals,
-                                 all_tasks: all_tasks
-                               } = acc ->
+        |> Enum.map(fn {task_id, {machine_id, processing_time}} ->
           suffix = "#{job_id}_#{task_id}"
-          start_var = "start_#{suffix}"
-          end_var = "end_#{suffix}"
-          interval_var = "interval_#{suffix}"
 
-          machine_to_intervals =
-            Map.update(machine_to_intervals, machine_id, [interval_var], fn machine_intervals ->
-              [interval_var | machine_intervals]
-            end)
-
-          all_tasks =
-            Map.put(all_tasks, {job_id, task_id}, %{
-              start: start_var,
-              end: end_var,
-              interval: interval_var
-            })
-
-          builder =
-            builder
-            |> Builder.def_int_var(^start_var, {0, horizon})
-            |> Builder.def_int_var(^end_var, {0, horizon})
-            |> Builder.def_interval_var(
-              ^interval_var,
-              ^start_var,
-              ^processing_time,
-              ^end_var
-            )
-
-          %{
-            acc
-            | builder: builder,
-              machine_to_intervals: machine_to_intervals,
-              all_tasks: all_tasks
+          {
+            {job_id, task_id},
+            %{
+              machine: machine_id,
+              start: "start_#{suffix}",
+              processing_time: processing_time,
+              end: "end_#{suffix}",
+              interval: "interval_#{suffix}"
+            }
           }
         end)
       end)
+      |> List.flatten()
+      |> Enum.into(%{})
 
-    builder =
-      all_machines
-      |> Enum.reduce(builder, fn machine, builder ->
-        builder
-        |> Builder.constrain_list(:no_overlap, machine_to_intervals[machine])
+    machine_constraints =
+      tasks
+      |> Enum.map(fn {_, %{machine: machine_id, interval: interval_var}} ->
+        {machine_id, interval_var}
+      end)
+      |> Enum.group_by(fn {machine_id, _} -> machine_id end, fn {_, interval_var} ->
+        interval_var
+      end)
+      |> Enum.map(fn {_machine_id, intervals} ->
+        Constraint.no_overlap(intervals)
       end)
 
-    builder =
-      jobs_data
-      |> Enum.with_index()
-      |> Enum.reduce(builder, fn {job, job_id}, builder ->
+    task_vars =
+      tasks
+      |> Map.values()
+      |> Enum.map(fn
+        %{
+          start: start_var,
+          processing_time: processing_time,
+          end: end_var,
+          interval: interval_var
+        } ->
+          [
+            IntVar.new(start_var, {0, horizon}),
+            IntVar.new(end_var, {0, horizon}),
+            IntervalVar.new(interval_var, start_var, processing_time, end_var)
+          ]
+      end)
+      |> List.flatten()
+
+    task_constraints =
+      jobs
+      |> Enum.map(fn {job_id, job} ->
         job
         |> Enum.slice(0, length(job) - 1)
-        |> Enum.with_index()
-        |> Enum.reduce(builder, fn {_job, task_id}, builder ->
-          builder
-          |> Builder.constrain(
-            all_tasks[{job_id, task_id + 1}].start,
-            :>=,
-            all_tasks[{job_id, task_id}].end
-          )
+        |> Enum.map(fn {task_id, _task} ->
+          task_start = tasks[{job_id, task_id + 1}].start
+          task_end = tasks[{job_id, task_id}].end
+          Constraint.new(^task_start >= ^task_end)
         end)
       end)
+      |> List.flatten()
 
     builder =
-      builder
+      Builder.new()
+      |> Builder.add(task_vars)
+      |> Builder.add(machine_constraints)
+      |> Builder.add(task_constraints)
       |> Builder.def_int_var("makespan", {0, horizon})
       |> Builder.max_equality(
         "makespan",
-        jobs_data
-        |> Enum.with_index()
-        |> Enum.map(fn {job, job_id} ->
-          all_tasks[{job_id, length(job) - 1}].end
+        jobs
+        |> Enum.map(fn {job_id, job} ->
+          tasks[{job_id, length(job) - 1}].end
         end)
       )
       |> Builder.minimize("makespan")
@@ -131,31 +126,25 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
       |> Model.solve()
 
     assert :optimal == response.status
-    assert 11.0 == response.objective
+    assert 11 == response.objective
 
     assert %{
              "Machine: 0" => %{"0_0" => {2, 5}, "1_0" => {0, 2}},
              "Machine: 1" => %{"0_1" => {5, 7}, "1_2" => {7, 11}, "2_0" => {0, 4}},
              "Machine: 2" => %{"0_2" => {7, 9}, "1_1" => {2, 3}, "2_1" => {4, 7}}
            } =
-             jobs_data
-             |> Enum.with_index()
-             |> Enum.map(fn {job, job_id} ->
-               job
-               |> Enum.with_index()
-               |> Enum.map(fn {{machine_id, _processing_time}, task_id} ->
-                 suffix = "#{job_id}_#{task_id}"
-                 start_var = "start_#{suffix}"
-                 end_var = "end_#{suffix}"
-
+             tasks
+             |> Enum.map(fn {{job_id, task_id},
+                             %{machine: machine_id, start: start_var, end: end_var}} ->
+               {
+                 "Machine: #{machine_id}",
                  {
-                   "Machine: #{machine_id}",
-                   {suffix, SolverResponse.int_val(response, ^start_var),
-                    SolverResponse.int_val(response, ^end_var)}
+                   "#{job_id}_#{task_id}",
+                   SolverResponse.int_val(response, ^start_var),
+                   SolverResponse.int_val(response, ^end_var)
                  }
-               end)
+               }
              end)
-             |> List.flatten()
              |> Enum.group_by(fn {machine, _} -> machine end)
              |> Enum.map(fn {machine, jobs} ->
                {

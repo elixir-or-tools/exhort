@@ -29,6 +29,7 @@ defmodule Exhort.SAT.Builder do
       alias Exhort.SAT.BoolVar
       alias Exhort.SAT.Builder
       alias Exhort.SAT.Constraint
+      alias Exhort.SAT.IntervalVar
       alias Exhort.SAT.IntVar
       alias Exhort.SAT.LinearExpression
       alias Exhort.SAT.Model
@@ -65,6 +66,10 @@ defmodule Exhort.SAT.Builder do
   end
 
   def add(%Builder{vars: vars} = builder, %IntVar{} = var) do
+    %Builder{builder | vars: Vars.add(vars, var)}
+  end
+
+  def add(%Builder{vars: vars} = builder, %IntervalVar{} = var) do
     %Builder{builder | vars: Vars.add(vars, var)}
   end
 
