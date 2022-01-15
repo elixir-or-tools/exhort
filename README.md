@@ -72,13 +72,13 @@ The result of the `build` function is a `Model`.
 
     builder =
       Builder.new()
-      |> Builder.def_int_var(x, {0, 10})
-      |> Builder.def_int_var(y, {0, 10})
-      |> Builder.def_bool_var(b)
-      |> Builder.constrain(x >= 5, if: b)
-      |> Builder.constrain(x <= 5, unless: b)
-      |> Builder.constrain(x + y == 10, if: b)
-      |> Builder.constrain(y == 0, unless: b)
+      |> Builder.def_int_var("x", {0, 10})
+      |> Builder.def_int_var("y", {0, 10})
+      |> Builder.def_bool_var("b")
+      |> Builder.constrain("x" >= 5, if: "b")
+      |> Builder.constrain("x" <= 5, unless: "b")
+      |> Builder.constrain("x" + "y" == 10, if: "b")
+      |> Builder.constrain("y" == 0, unless: "b")
 
     {response, acc} =
       builder
@@ -102,22 +102,22 @@ The result of the `build` function is a `Model`.
 
 ### Variables
 
-Model variables are symbolic and don't leak to the surrounding Elixir context.
-This allows the variables to be consistently referenced through a builder
-pipeline, for example, without having to capture an intermediate result.
+Model variables are symbolic, represented as strings or atoms, and so don't
+interfere to the surrounding Elixir context. This allows the variables to be
+consistently referenced through a builder pipeline, for example, without having
+to capture an intermediate result.
 
-To reference an Elixir value from an Exhort expression, pin it like you would in
-Ecto using `^`.
+Elixir variables may be used "as is" in expressions, allowing variables to be
+generated from enumerable collections.
 
-In the following expression, `x` is a model variable, while `y` is an Elixir
+In the following expression, `"x"` is a model variable, while `y` is an Elixir
 variable:
 
 ```elixir
-x < ^y + 3
+"x" < y + 3
 ```
 
-Strings and atoms are also supported for variable names, which is often valuable
-when names are generated:
+Building variables is done through normal Elixir expressions:
 
 ```elixir
     builder
@@ -134,7 +134,7 @@ Of course, such names are still usable in expressions:
 
 ```elixir
     builder
-    |> Builder.constrain("slack_#{bin}" <= ^bin_total)
+    |> Builder.constrain("slack_#{bin}" <= bin_total)
 ```
 
 ### Expressions
@@ -150,7 +150,7 @@ comprehension.
       load_bin = "load_#{bin}"
 
       builder
-      |> Builder.constrain(sum(for {item, x} <- ^expr, do: ^item * ^x) == ^load_bin)
+      |> Builder.constrain(sum(for {item, x} <- expr, do: item * x) == load_bin)
     end)
 ```
 

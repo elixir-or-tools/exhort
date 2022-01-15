@@ -100,7 +100,7 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
         |> Enum.map(fn {task_id, _task} ->
           task_start = tasks[{job_id, task_id + 1}].start
           task_end = tasks[{job_id, task_id}].end
-          Constraint.new(^task_start >= ^task_end)
+          Constraint.new(task_start >= task_end)
         end)
       end)
       |> List.flatten()
@@ -140,8 +140,8 @@ defmodule Samples.Exhort.SAT.MinimalJobShop do
                  "Machine: #{machine_id}",
                  {
                    "#{job_id}_#{task_id}",
-                   SolverResponse.int_val(response, ^start_var),
-                   SolverResponse.int_val(response, ^end_var)
+                   SolverResponse.int_val(response, start_var),
+                   SolverResponse.int_val(response, end_var)
                  }
                }
              end)

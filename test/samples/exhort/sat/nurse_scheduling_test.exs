@@ -95,7 +95,7 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
         end)
       end)
       |> then(fn list ->
-        Builder.maximize(builder, sum(^list))
+        Builder.maximize(builder, sum(list))
       end)
 
     solver =

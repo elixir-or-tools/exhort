@@ -41,7 +41,7 @@ defmodule Samples.Exhort.SAT.MultipleKnapsack do
         x_option_vars = Enum.map(x_options, fn {i, b} -> "x_#{i}_#{b}" end)
 
         total_x = LinearExpression.sum(x_option_vars)
-        Builder.constrain(builder, ^total_x <= 1)
+        Builder.constrain(builder, total_x <= 1)
       end)
 
     builder =
@@ -55,7 +55,7 @@ defmodule Samples.Exhort.SAT.MultipleKnapsack do
 
         total_bin_weight = LinearExpression.sum(bin_weight)
         bin_capacity = Enum.at(bin_capacities, bin)
-        Builder.constrain(builder, ^total_bin_weight <= ^bin_capacity)
+        Builder.constrain(builder, total_bin_weight <= bin_capacity)
       end)
 
     builder =
@@ -66,7 +66,7 @@ defmodule Samples.Exhort.SAT.MultipleKnapsack do
         end)
       end)
       |> then(fn list ->
-        Builder.maximize(builder, sum(^list))
+        Builder.maximize(builder, sum(list))
       end)
 
     solver =

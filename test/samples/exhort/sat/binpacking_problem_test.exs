@@ -38,7 +38,7 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
         expr = Enum.map(items, &{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
         load_bin = "load_#{bin}"
 
-        Constraint.new(sum(for {item, x} <- ^expr, do: ^item * ^x) == ^load_bin)
+        Constraint.new(sum(for {item, x} <- expr, do: item * x) == load_bin)
       end)
 
     placements =
@@ -46,7 +46,7 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
       |> Enum.map(fn {item, num_copies} ->
         x_i = Enum.map(all_bins, &"x_#{item}_#{&1}")
 
-        Constraint.new(sum(^x_i) == ^num_copies)
+        Constraint.new(sum(x_i) == num_copies)
       end)
 
     constrain_load_to_slack =
@@ -58,8 +58,8 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
         slack_bin = "slack_#{bin}"
 
         [
-          Constraint.new(^load_bin <= ^safe_capacity, if: ^slack_bin),
-          Constraint.new(^load_bin > ^safe_capacity, unless: ^slack_bin)
+          Constraint.new(load_bin <= safe_capacity, if: slack_bin),
+          Constraint.new(load_bin > safe_capacity, unless: slack_bin)
         ]
       end)
       |> List.flatten()
@@ -74,7 +74,7 @@ defmodule Samples.Exhort.SAT.BinpackingProblem do
       |> Builder.add(constrain_load_to_slack)
       |> then(fn builder ->
         bins = Enum.map(all_bins, &"slack_#{&1}")
-        Builder.maximize(builder, sum(^bins))
+        Builder.maximize(builder, sum(bins))
       end)
 
     response =

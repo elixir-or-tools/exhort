@@ -21,7 +21,7 @@ defmodule Samples.Exhort.SAT.NQueens do
 
         builder =
           builder
-          |> Builder.def_int_var(^queen, {0, board_size - 1})
+          |> Builder.def_int_var(queen, {0, board_size - 1})
           |> Builder.def_constant("#{column}", column)
 
         %{acc | builder: builder, queens: queens}

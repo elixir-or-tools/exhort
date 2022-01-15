@@ -80,13 +80,8 @@ defmodule Exhort.SAT.Builder do
   @doc """
   Define a boolean variable in the model.
   """
-  defmacro def_bool_var(builder, name) do
-    name = DSL.transform_expression(name)
-
-    quote do
-      %Builder{vars: vars} = builder = unquote(builder)
-      %Builder{builder | vars: Vars.add(vars, %BoolVar{name: unquote(name)})}
-    end
+  def def_bool_var(%Builder{vars: vars} = builder, name) do
+    %Builder{builder | vars: Vars.add(vars, %BoolVar{name: name})}
   end
 
   @doc """
@@ -96,17 +91,8 @@ defmodule Exhort.SAT.Builder do
   - `domain` is the uppper and lower bounds of the integer as a tuple,
     `{lower_bound, upper_bound}`
   """
-  defmacro def_int_var(builder, name, domain) do
-    name = DSL.transform_expression(name)
-
-    quote do
-      %Builder{vars: vars} = builder = unquote(builder)
-
-      %Builder{
-        builder
-        | vars: Vars.add(vars, %IntVar{name: unquote(name), domain: unquote(domain)})
-      }
-    end
+  def def_int_var(%Builder{vars: vars} = builder, name, domain) do
+    %Builder{builder | vars: Vars.add(vars, %IntVar{name: name, domain: domain})}
   end
 
   @doc """
@@ -120,42 +106,24 @@ defmodule Exhort.SAT.Builder do
   - `stop` is the end of the interval
   """
 
-  defmacro def_interval_var(builder, name, start, size, stop) do
-    name = DSL.transform_expression(name)
-    start = DSL.transform_expression(start)
-    size = DSL.transform_expression(size)
-    stop = DSL.transform_expression(stop)
-
-    quote do
-      %Builder{vars: vars} = builder = unquote(builder)
-
-      %Builder{
-        builder
-        | vars:
-            Vars.add(vars, %IntervalVar{
-              name: unquote(name),
-              start: unquote(start),
-              size: unquote(size),
-              stop: unquote(stop)
-            })
-      }
-    end
+  def def_interval_var(%Builder{vars: vars} = builder, name, start, size, stop) do
+    %Builder{
+      builder
+      | vars:
+          Vars.add(vars, %IntervalVar{
+            name: name,
+            start: start,
+            size: size,
+            stop: stop
+          })
+    }
   end
 
   @doc """
   Create a named constant. `value` should be a constant integer.
   """
-  defmacro def_constant(builder, name, value) do
-    name = DSL.transform_expression(name)
-
-    quote do
-      %Builder{vars: vars} = builder = unquote(builder)
-
-      %Builder{
-        builder
-        | vars: Vars.add(vars, %IntVar{name: unquote(name), domain: unquote(value)})
-      }
-    end
+  def def_constant(%Builder{vars: vars} = builder, name, value) do
+    %Builder{builder | vars: Vars.add(vars, %IntVar{name: name, domain: value})}
   end
 
   @doc """

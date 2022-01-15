@@ -15,7 +15,10 @@ defmodule Exhort.SAT.IntVar do
   - `domain` - The upper and lower bounds of the variable defined as a tuple,
     `{lower_bound, upper_bound}`.
   """
-  @spec new(name :: String.t(), domain :: {lower_bound :: integer(), upper_bound :: integer()}) ::
+  @spec new(
+          name :: String.t(),
+          domain :: {lower_bound :: integer(), upper_bound :: integer()} | integer()
+        ) ::
           IntVar.t()
   def new(name, domain) do
     %IntVar{name: name, domain: domain}

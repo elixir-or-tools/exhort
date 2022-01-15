@@ -45,7 +45,6 @@ defmodule Exhort.SAT.DSL do
   defp transform([head | []]), do: [transform(head)]
   defp transform([head | tail]), do: [transform(head) | transform(tail)]
 
-  defp transform({:^, _, [{_var, _, nil} = x]}), do: x
   defp transform({:if, x}), do: {:if, transform(x)}
   defp transform({:unless, x}), do: {:unless, transform(x)}
 
@@ -53,6 +52,5 @@ defmodule Exhort.SAT.DSL do
   defp transform({:<-, m, list}), do: {:<-, m, transform(list)}
   defp transform({:do, arg}), do: {:do, transform(arg)}
 
-  defp transform({x, _, _}), do: x
   defp transform(i), do: i
 end

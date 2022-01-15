@@ -24,8 +24,8 @@ defmodule Samples.Exhort.SAT.CpIsFun do
 
       # CP + IS + FUN = TRUE
       |> Builder.constrain(
-        "c" * ^base + "p" + "i" * ^base + "s" + "f" * ^base * ^base + "u" * ^base + "n" ==
-          "t" * ^base * ^base * ^base + "r" * ^base * ^base + "u" * ^base + "e"
+        "c" * base + "p" + "i" * base + "s" + "f" * base * base + "u" * base + "n" ==
+          "t" * base * base * base + "r" * base * base + "u" * base + "e"
       )
 
     solution_callback = fn %SolverResponse{} = _response, acc ->

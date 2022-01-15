@@ -11,9 +11,9 @@ defmodule Exhort.SAT.SolverResponse do
   alias __MODULE__
   alias Exhort.NIF.Nif
   alias Exhort.SAT.BoolVar
-  alias Exhort.SAT.DSL
   alias Exhort.SAT.IntVar
   alias Exhort.SAT.Model
+  alias Exhort.SAT.SolverResponse
   alias Exhort.SAT.Vars
 
   @spec build(map(), Model.t()) :: SolverResponse.t()
@@ -50,25 +50,17 @@ defmodule Exhort.SAT.SolverResponse do
   @doc """
   Get the corresponding value of the integer variable.
   """
-  @spec int_val(Macro.t(), Macro.t()) :: Macro.t()
-  defmacro int_val(response_exp, var_exp) do
-    var_exp = DSL.transform_expression(var_exp)
-
-    quote do
-      SolverResponse.get_int_val(unquote(response_exp), unquote(var_exp))
-    end
+  @spec int_val(SolverResponse.t(), literal :: String.t() | atom()) :: integer()
+  def int_val(response, var) do
+    SolverResponse.get_int_val(response, var)
   end
 
   @doc """
   Get the corresponding value of the boolean variable.
   """
-  @spec bool_val(Macro.t(), literal :: atom() | String.t()) :: Macro.t()
-  defmacro bool_val(response_exp, var_exp) do
-    var_exp = DSL.transform_expression(var_exp)
-
-    quote do
-      SolverResponse.get_bool_val(unquote(response_exp), unquote(var_exp))
-    end
+  @spec bool_val(SolverResponse.t(), literal :: String.t() | atom()) :: integer()
+  def bool_val(response, var) do
+    SolverResponse.get_bool_val(response, var)
   end
 
   @spec get_int_val(SolverResponse.t(), var :: atom() | String.t() | IntVar.t()) ::

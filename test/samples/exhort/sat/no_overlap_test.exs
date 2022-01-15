@@ -42,9 +42,9 @@ defmodule Samples.Exhort.SAT.NoOverlap do
         "weekend_2"
       ])
       |> Builder.def_int_var("makespan", {0, horizon})
-      |> Builder.constrain("end_0", :<=, "makespan")
-      |> Builder.constrain("end_1", :<=, "makespan")
-      |> Builder.constrain("end_2", :<=, "makespan")
+      |> Builder.constrain("end_0" <= "makespan")
+      |> Builder.constrain("end_1" <= "makespan")
+      |> Builder.constrain("end_2" <= "makespan")
       |> Builder.minimize("makespan")
       |> Builder.build()
       |> Model.solve()
