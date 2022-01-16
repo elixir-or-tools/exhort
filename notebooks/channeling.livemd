@@ -1,0 +1,39 @@
+# Binpacking
+
+## Setup
+
+```elixir
+Mix.install([
+  {:exhort, git: "https://github.com/elixir-or-tools/exhort"}
+])
+```
+
+```elixir
+use Exhort.SAT.Builder
+```
+
+## Model
+
+```elixir
+builder =
+  Builder.new()
+  |> Builder.def_int_var(:x, {0, 10})
+  |> Builder.def_int_var(:y, {0, 10})
+  |> Builder.def_bool_var(:b)
+  |> Builder.constrain(:x >= 5, if: :b)
+  |> Builder.constrain(:x < 5, unless: :b)
+  |> Builder.constrain(:x + :y == 10, if: :b)
+  |> Builder.constrain(:y == 0, unless: :b)
+```
+
+## Solution
+
+```elixir
+{response, acc} =
+  builder
+  |> Builder.build()
+  |> Model.solve(fn
+    _response, nil -> 1
+    _response, acc -> acc + 1
+  end)
+```

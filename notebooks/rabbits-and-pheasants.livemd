@@ -1,0 +1,30 @@
+<!-- vim: set syntax=markdown: -->
+
+# Rabbits and Pheasants
+
+## Setup
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+Mix.install([
+  {:exhort, git: "https://github.com/elixir-or-tools/exhort"}
+])
+```
+
+```elixir
+use Exhort.SAT.Builder
+```
+
+## Model
+
+```elixir
+response =
+  Builder.new()
+  |> Builder.def_int_var("r", {0, 100})
+  |> Builder.def_int_var("p", {0, 100})
+  |> Builder.constrain("r" + "p" == 20)
+  |> Builder.constrain(4 * "r" + 2 * "p" == 56)
+  |> Builder.build()
+  |> Model.solve()
+```

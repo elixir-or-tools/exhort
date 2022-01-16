@@ -9,7 +9,8 @@ defmodule Exhort.NIF.Nif do
   require Logger
 
   def load_nifs do
-    :erlang.load_nif('priv/lib/nif', 0)
+    path = :filename.join(:code.priv_dir(:exhort), 'lib/nif')
+    :erlang.load_nif(path, 0)
   end
 
   def new_builder_nif do
