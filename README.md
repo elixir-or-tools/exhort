@@ -17,24 +17,6 @@ Exhort is similar to the non-native interfaces to the tooling, but uses
 The goal of Exhort is to provide an idomatic Elixir interface to the Google OR
 Tools.
 
-## Getting Started
-
-The easiest way to get started is with the sample Livebook notebooks in the
-`notebooks` directory.
-
-Startup [Livebook](https://livebook.dev/) and open a notebook (use whatever
-method you like to start Livebook).
-
-```sh
-$ mix escript.install hex livebook
-$ livebook server
-```
-
-Then just open the link that is written to the console and browse the samples.
-That should provide a starting place for exploring the Exhort API and expression
-language.
-
-
 ## Setup
 
 Because Exhort uses the Google OR tools, the first step is to install them on
@@ -68,6 +50,23 @@ Then:
 $ mix compile
 $ mix test
 ```
+
+## Getting Started
+
+The easiest way to get started is with the sample Livebook notebooks in the
+`notebooks` directory.
+
+Start [Livebook](https://livebook.dev/) and open a notebook (use whatever method
+you like to start Livebook).
+
+```sh
+$ mix escript.install hex livebook
+$ livebook server
+```
+
+Then just open the link that is written to the console and browse the samples.
+That should provide a starting place for exploring the Exhort API and expression
+language.
 
 ## API
 

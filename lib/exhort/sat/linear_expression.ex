@@ -4,7 +4,8 @@ defmodule Exhort.SAT.LinearExpression do
   model.
 
   Expressions should be defined through `Exhort.SAT.Constraint` or
-  `Exhort.SAT.Builder`.
+  `Exhort.SAT.Builder`. Alternatively, a new expression may be created using the
+  `Exhort.SAT.LinearExpression.new/1` macro.
 
   The approach here is to transform values into `LinearExpression`s and then
   apply the operator (e.g., `:sum`) to the expressions. This allows for fewer
