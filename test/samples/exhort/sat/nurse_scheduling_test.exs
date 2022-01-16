@@ -18,49 +18,54 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
       [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 0]]
     ]
 
-    acc = %{
-      builder: Builder.new(),
-      shifts: []
-    }
-
-    %{
-      builder: builder,
-      shifts: shifts
-    } =
-      Enum.reduce(all_nurses, acc, fn nurse, acc ->
-        Enum.reduce(all_days, acc, fn day, acc ->
-          Enum.reduce(all_shifts, acc, fn shift, %{builder: builder, shifts: shifts} = acc ->
-            shifts = shifts ++ [{nurse, day, shift}]
-            builder = Builder.def_bool_var(builder, "shift_#{nurse}_#{day}_#{shift}")
-
-            %{
-              acc
-              | builder: builder,
-                shifts: shifts
-            }
+    shifts =
+      Enum.map(all_nurses, fn nurse ->
+        Enum.map(all_days, fn day ->
+          Enum.map(all_shifts, fn shift ->
+            {nurse, day, shift}
           end)
         end)
       end)
+      |> List.flatten()
 
-    builder =
-      Enum.reduce(all_days, builder, fn day, builder ->
-        Enum.reduce(all_shifts, builder, fn shift, builder ->
+    shift_vars =
+      shifts
+      |> Enum.map(fn {nurse, day, shift} ->
+        BoolVar.new("shift_#{nurse}_#{day}_#{shift}")
+      end)
+
+    # Each shift is assigned to exactly one nurse in the schedule period.
+    shift_nurses_per_period =
+      all_days
+      |> Enum.map(fn day ->
+        all_shifts
+        |> Enum.map(fn shift ->
           shift_options = Enum.filter(shifts, fn {_n, d, s} -> d == day and s == shift end)
           shift_option_vars = Enum.map(shift_options, fn {n, d, s} -> "shift_#{n}_#{d}_#{s}" end)
 
-          Builder.constrain(builder, LinearExpression.sum(shift_option_vars), :==, 1)
+          Constraint.new(sum(shift_option_vars) == 1)
         end)
       end)
+      |> List.flatten()
 
-    builder =
-      Enum.reduce(all_nurses, builder, fn nurse, builder ->
-        Enum.reduce(all_days, builder, fn day, builder ->
+    # Each nurse works at most one shift per day
+    nurse_shifts_per_day =
+      all_nurses
+      |> Enum.map(fn nurse ->
+        all_days
+        |> Enum.map(fn day ->
           shift_options = Enum.filter(shifts, fn {n, d, _s} -> n == nurse and d == day end)
           shift_option_vars = Enum.map(shift_options, fn {n, d, s} -> "shift_#{n}_#{d}_#{s}" end)
 
-          Builder.constrain(builder, LinearExpression.sum(shift_option_vars), :<=, 1)
+          Constraint.new(sum(shift_option_vars) <= 1)
         end)
       end)
+      |> List.flatten()
+
+    # Try to distribute the shifts evenly, so that each nurse works
+    # min_shifts_per_nurse shifts. If this is not possible, because the total
+    # number of shifts is not divisible by the number of nurses, some nurses
+    # will be assigned one more shift.
 
     min_shifts_per_nurse = div(num_shifts * num_days, num_nurses)
 
@@ -71,47 +76,57 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
         min_shifts_per_nurse + 1
       end
 
-    builder =
-      Enum.reduce(all_nurses, builder, fn nurse, builder ->
+    distribution_constraints =
+      all_nurses
+      |> Enum.map(fn nurse ->
         shift_options = Enum.filter(shifts, fn {n, _d, _s} -> n == nurse end)
         shift_option_vars = Enum.map(shift_options, fn {n, d, s} -> "shift_#{n}_#{d}_#{s}" end)
 
-        builder
-        |> Builder.constrain(min_shifts_per_nurse, :<=, LinearExpression.sum(shift_option_vars))
-        |> Builder.constrain(LinearExpression.sum(shift_option_vars), :<=, max_shifts_per_nurse)
+        [
+          Expr.new(min_shifts_per_nurse <= sum(shift_option_vars)),
+          Expr.new(sum(shift_option_vars) <= max_shifts_per_nurse)
+        ]
       end)
+      |> List.flatten()
 
-    builder =
-      Enum.reduce(all_nurses, [], fn nurse, shift_obj ->
-        Enum.reduce(all_days, shift_obj, fn day, shift_obj ->
-          Enum.reduce(all_shifts, shift_obj, fn shift, shift_obj ->
+    # Objective function
+    max_list =
+      all_nurses
+      |> Enum.map(fn nurse ->
+        all_days
+        |> Enum.map(fn day ->
+          all_shifts
+          |> Enum.map(fn shift ->
             shift_var = "shift_#{nurse}_#{day}_#{shift}"
 
             request =
               shift_requests |> Enum.at(nurse - 1) |> Enum.at(day - 1) |> Enum.at(shift - 1)
 
-            shift_obj ++ [LinearExpression.prod(shift_var, request)]
+            Expr.new(shift_var * request)
           end)
         end)
       end)
-      |> then(fn list ->
-        Builder.maximize(builder, sum(list))
-      end)
+      |> List.flatten()
 
-    solver =
-      builder
+    response =
+      Builder.new()
+      |> Builder.add(shift_vars)
+      |> Builder.add(shift_nurses_per_period)
+      |> Builder.add(nurse_shifts_per_day)
+      |> Builder.add(distribution_constraints)
+      |> Builder.maximize(sum(max_list))
       |> Builder.build()
       |> Model.solve()
 
-    assert solver.status == :optimal
-    assert solver.objective == 13
+    assert response.status == :optimal
+    assert response.objective == 13
 
     shift_counts =
       Enum.reduce(all_nurses, [], fn nurse, acc ->
         count =
           Enum.reduce(all_days, 0, fn day, acc ->
             Enum.reduce(all_shifts, acc, fn shift, acc ->
-              if SolverResponse.bool_val(solver, "shift_#{nurse}_#{day}_#{shift}") do
+              if SolverResponse.bool_val(response, "shift_#{nurse}_#{day}_#{shift}") do
                 acc + 1
               else
                 acc
