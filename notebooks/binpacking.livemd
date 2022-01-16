@@ -1,0 +1,104 @@
+# Binpacking
+
+## Setup
+
+```elixir
+Mix.install([
+  {:exhort, git: "https://github.com/elixir-or-tools/exhort"}
+])
+```
+
+```elixir
+use Exhort.SAT.Builder
+```
+
+## Data
+
+```elixir
+bin_capacity = 100
+slack_capacity = 20
+num_bins = 5
+all_bins = Range.new(1, num_bins)
+
+items = [{20, 6}, {15, 6}, {30, 4}, {45, 3}]
+```
+
+## Constraints
+
+```elixir
+xs =
+  items
+  |> Enum.map(fn {item, num_copies} ->
+    all_bins
+    |> Enum.map(fn bin ->
+      IntVar.new("x_#{item}_#{bin}", {0, num_copies})
+    end)
+  end)
+  |> List.flatten()
+
+loads =
+  all_bins
+  |> Enum.map(fn bin ->
+    IntVar.new("load_#{bin}", {0, bin_capacity})
+  end)
+
+slacks =
+  all_bins
+  |> Enum.map(fn bin ->
+    BoolVar.new("slack_#{bin}")
+  end)
+
+constrain_load_to_x =
+  all_bins
+  |> Enum.map(fn bin ->
+    expr = Enum.map(items, &{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
+    load_bin = "load_#{bin}"
+
+    Constraint.new(sum(for {item, x} <- expr, do: item * x) == load_bin)
+  end)
+
+placements =
+  items
+  |> Enum.map(fn {item, num_copies} ->
+    x_i = Enum.map(all_bins, &"x_#{item}_#{&1}")
+
+    Constraint.new(sum(x_i) == num_copies)
+  end)
+
+constrain_load_to_slack =
+  all_bins
+  |> Enum.map(fn bin ->
+    safe_capacity = bin_capacity - slack_capacity
+
+    load_bin = "load_#{bin}"
+    slack_bin = "slack_#{bin}"
+
+    [
+      Constraint.new(load_bin <= safe_capacity, if: slack_bin),
+      Constraint.new(load_bin > safe_capacity, unless: slack_bin)
+    ]
+  end)
+  |> List.flatten()
+```
+
+## Solve
+
+```elixir
+builder =
+  Builder.new()
+  |> Builder.add(xs)
+  |> Builder.add(loads)
+  |> Builder.add(slacks)
+  |> Builder.add(constrain_load_to_x)
+  |> Builder.add(placements)
+  |> Builder.add(constrain_load_to_slack)
+  |> then(fn builder ->
+    bins = Enum.map(all_bins, &"slack_#{&1}")
+    Builder.maximize(builder, sum(bins))
+  end)
+
+response =
+  builder
+  |> Builder.build()
+  |> Model.solve()
+```

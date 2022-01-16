@@ -17,6 +17,24 @@ Exhort is similar to the non-native interfaces to the tooling, but uses
 The goal of Exhort is to provide an idomatic Elixir interface to the Google OR
 Tools.
 
+## Getting Started
+
+The easiest way to get started is with the sample Livebook notebooks in the
+`notebooks` directory.
+
+Startup [Livebook](https://livebook.dev/) and open a notebook (use whatever
+method you like to start Livebook).
+
+```sh
+$ mix escript.install hex livebook
+$ livebook server
+```
+
+Then just open the link that is written to the console and browse the samples.
+That should provide a starting place for exploring the Exhort API and expression
+language.
+
+
 ## Setup
 
 Because Exhort uses the Google OR tools, the first step is to install them on
@@ -76,7 +94,7 @@ The result of the `build` function is a `Model`.
       |> Builder.def_int_var("y", {0, 10})
       |> Builder.def_bool_var("b")
       |> Builder.constrain("x" >= 5, if: "b")
-      |> Builder.constrain("x" <= 5, unless: "b")
+      |> Builder.constrain("x" < 5, unless: "b")
       |> Builder.constrain("x" + "y" == 10, if: "b")
       |> Builder.constrain("y" == 0, unless: "b")
 
@@ -95,9 +113,9 @@ The result of the `build` function is a `Model`.
     # :optimal
     response.status |> IO.inspect(label: "satus: ")
     # 10, 0, true
-    SolverResponse.int_val(response, x) |> IO.inspect(label: "x: ")
-    SolverResponse.int_val(response, y) |> IO.inspect(label: "y: ")
-    SolverResponse.bool_val(response, b) |> IO.inspect(label: "b: ")
+    SolverResponse.int_val(response, "x") |> IO.inspect(label: "x: ")
+    SolverResponse.int_val(response, "y") |> IO.inspect(label: "y: ")
+    SolverResponse.bool_val(response, "b") |> IO.inspect(label: "b: ")
 ```
 
 ### Variables
@@ -139,9 +157,10 @@ Of course, such names are still usable in expressions:
 
 ### Expressions
 
-Exhort supports a limited set of expressions. Expressions may use a comparison
-operator (`<`, `<=`, `==`, `>=`, `>`), the `sum` function and even the `for`
-comprehension.
+Exhort supports a limited set of expressions. Expressions may use the binary
+operators `+`, `-` and `*`, with their traditional mathematical meaning. They
+may also use comparison operators `<`, `<=`, `==`, `>=`, `>`, the `sum` function
+and even the `for` comprehension.
 
 ```elixir
     builder
