@@ -29,6 +29,7 @@ defmodule Exhort.SAT.Builder do
       alias Exhort.SAT.BoolVar
       alias Exhort.SAT.Builder
       alias Exhort.SAT.Constraint
+      alias Exhort.SAT.Expr
       alias Exhort.SAT.IntervalVar
       alias Exhort.SAT.IntVar
       alias Exhort.SAT.LinearExpression
@@ -37,6 +38,7 @@ defmodule Exhort.SAT.Builder do
 
       require Exhort.SAT.Builder
       require Exhort.SAT.Constraint
+      require Exhort.SAT.Expr
       require Exhort.SAT.LinearExpression
       require Exhort.SAT.SolverResponse
     end
