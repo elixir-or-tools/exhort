@@ -43,7 +43,7 @@ defmodule Exhort.MixProject do
         "c_src/*.h",
         "Makefile"
       ],
-      maintainers: ["objectuser"],
+      maintainers: ["objectuser", "cameron-kurth"],
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/elixir-or-tools/exhort"}
     ]
