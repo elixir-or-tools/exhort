@@ -76,5 +76,21 @@ defmodule Samples.Exhort.SAT.MultipleKnapsack do
 
     assert solver.status == :optimal
     assert solver.objective == 395
+
+    {total_weight, total_value} =
+      Enum.reduce(all_bins, {0, 0}, fn bin, acc ->
+        Enum.reduce(all_items, acc, fn item, {total_weight, total_value} = acc ->
+          if SolverResponse.bool_val(solver, "x_#{item}_#{bin}") do
+            weight = Enum.at(weights, item)
+            value = Enum.at(values, item)
+            {total_weight + weight, total_value + value}
+          else
+            acc
+          end
+        end)
+      end)
+
+    assert total_value == solver.objective
+    assert total_weight == 438
   end
 end

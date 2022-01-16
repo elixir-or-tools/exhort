@@ -105,5 +105,23 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
 
     assert solver.status == :optimal
     assert solver.objective == 13
+
+    shift_counts =
+      Enum.reduce(all_nurses, [], fn nurse, acc ->
+        count =
+          Enum.reduce(all_days, 0, fn day, acc ->
+            Enum.reduce(all_shifts, acc, fn shift, acc ->
+              if SolverResponse.bool_val(solver, "shift_#{nurse}_#{day}_#{shift}") do
+                acc + 1
+              else
+                acc
+              end
+            end)
+          end)
+
+        acc ++ [count]
+      end)
+
+    assert shift_counts == [5, 4, 4, 4, 4]
   end
 end
