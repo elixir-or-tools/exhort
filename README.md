@@ -7,8 +7,8 @@ Beseach the maths to answer.
 Exhort is an Elixir interface to the [Google OR
 Tools](https://developers.google.com/optimization).
 
-Currently, there are C++ (native) and Python interfaces to the Google OR tools,
-with Java and C#.
+Currently, there are C++ (native) Python, Java and C# interfaces to the Google
+OR tools.
 
 Exhort is similar to the non-native interfaces to the tooling, but uses
 [NIFs](https://www.erlang.org/doc/tutorial/nif.html) instead of
@@ -61,10 +61,15 @@ you like to start Livebook).
 
 ```sh
 $ mix escript.install hex livebook
-$ livebook server
+# if installed in `asdf` use `asdf reshim`
+$ livebook server --name livebook@127.0.0.1
 ```
 
-Then just open the link that is written to the console and browse the samples.
+1. Use the link that is written to the console and browse the samples.
+2. Open a sample in the `notebooks` directory
+3. Run the notebook in the project by choosing the `Mix standalone` option in the
+   left side of Livebook under "Runtime setteings"
+
 That should provide a starting place for exploring the Exhort API and expression
 language.
 
@@ -116,6 +121,53 @@ The result of the `build` function is a `Model`.
     SolverResponse.int_val(response, "y") |> IO.inspect(label: "y: ")
     SolverResponse.bool_val(response, "b") |> IO.inspect(label: "b: ")
 ```
+
+### Expr
+
+Sometimes it may be more convenient to build up expressions separately and then
+add them to a `%Builer{}` all at once. This is often the case when more complex
+data sets are invovled in generating many variables and constraints for the
+model.
+
+Instead of having to maintain the builder through an `Enum.reduce/3` construct
+like this:
+
+```elixir
+    builder =
+      Enum.reduce(all_days, builder, fn day, builder ->
+        Enum.reduce(all_shifts, builder, fn shift, builder ->
+          shift_options = Enum.filter(shifts, fn {_n, d, s} -> d == day and s == shift end)
+          shift_option_vars = Enum.map(shift_options, fn {n, d, s} -> "shift_#{n}_#{d}_#{s}" end)
+
+          Builder.constrain(builder, sum(shift_option_vars) == 1)
+        end)
+      end)
+```
+
+Exhort allows the generation of lists of variables or constraint, maybe using
+`Enum.map/2`:
+
+```elixir
+    shift_nurses_per_period =
+      Enum.map(all_days, fn day ->
+        Enum.map(all_shifts, fn shift ->
+          shift_options = Enum.filter(shifts, fn {_n, d, s} -> d == day and s == shift end)
+          shift_option_vars = Enum.map(shift_options, fn {n, d, s} -> "shift_#{n}_#{d}_#{s}" end)
+
+          Expr.new(sum(shift_option_vars) == 1)
+        end)
+      end)
+      |> List.flatten()
+```
+
+These may then be added to the builder as a list:
+
+```elixir
+    builder
+    |> Builder.add(shift_nurses_per_period)
+...
+```
+
 
 ### Variables
 
