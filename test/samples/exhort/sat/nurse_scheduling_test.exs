@@ -31,7 +31,7 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
     shift_vars =
       shifts
       |> Enum.map(fn {nurse, day, shift} ->
-        BoolVar.new("shift_#{nurse}_#{day}_#{shift}")
+        Expr.def_bool_var("shift_#{nurse}_#{day}_#{shift}")
       end)
 
     # Each shift is assigned to exactly one nurse in the schedule period.
@@ -43,7 +43,7 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
           shift_options = Enum.filter(shifts, fn {_n, d, s} -> d == day and s == shift end)
           shift_option_vars = Enum.map(shift_options, fn {n, d, s} -> "shift_#{n}_#{d}_#{s}" end)
 
-          Constraint.new(sum(shift_option_vars) == 1)
+          Expr.new(sum(shift_option_vars) == 1)
         end)
       end)
       |> List.flatten()
@@ -57,7 +57,7 @@ defmodule Samples.Exhort.SAT.NurseScheduling do
           shift_options = Enum.filter(shifts, fn {n, d, _s} -> n == nurse and d == day end)
           shift_option_vars = Enum.map(shift_options, fn {n, d, s} -> "shift_#{n}_#{d}_#{s}" end)
 
-          Constraint.new(sum(shift_option_vars) <= 1)
+          Expr.new(sum(shift_option_vars) <= 1)
         end)
       end)
       |> List.flatten()

@@ -107,7 +107,6 @@ defmodule Exhort.SAT.Builder do
   - `size` is the size of the interval
   - `stop` is the end of the interval
   """
-
   def def_interval_var(%Builder{vars: vars} = builder, name, start, size, stop) do
     %Builder{
       builder

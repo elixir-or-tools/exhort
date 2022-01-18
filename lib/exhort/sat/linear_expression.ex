@@ -77,6 +77,17 @@ defmodule Exhort.SAT.LinearExpression do
     |> then(&%LinearExpression{expr | res: &1, expr: {:prod, expr1, int2}})
   end
 
+  def resolve(
+        %LinearExpression{res: nil, expr: {:prod, int1, %LinearExpression{} = expr2}} = expr,
+        vars
+      )
+      when is_integer(int1) do
+    %LinearExpression{} = expr2 = resolve(expr2, vars)
+
+    Nif.prod_expr1_constant2_nif(expr2.res, int1)
+    |> then(&%LinearExpression{expr | res: &1, expr: {:prod, int1, expr2}})
+  end
+
   def resolve(%LinearExpression{res: nil, expr: {:prod, sym1, int2}} = expr, vars)
       when not is_integer(sym1) and is_integer(int2) do
     var1 = Vars.get(vars, sym1)
@@ -89,6 +100,10 @@ defmodule Exhort.SAT.LinearExpression do
     var2 = Vars.get(vars, sym2)
 
     resolve(%LinearExpression{expr | expr: {:prod, var2, int1}}, vars)
+  end
+
+  def resolve(%LinearExpression{res: nil, expr: {:prod, _, _}}, _vars) do
+    raise "Products are only supported when one of the arguments is a constant"
   end
 
   def resolve(

@@ -54,7 +54,7 @@ shifts =
 shift_vars =
   shifts
   |> Enum.map(fn {nurse, day, shift} ->
-    BoolVar.new("shift_#{nurse}_#{day}_#{shift}")
+    Expr.def_bool_var("shift_#{nurse}_#{day}_#{shift}")
   end)
 ```
 

@@ -18,18 +18,10 @@ defmodule Samples.Exhort.SAT.EarlinessTardinessCostTest do
       |> Builder.def_constant("earliness_cost", earliness_cost)
       |> Builder.def_constant("lateness_date", lateness_date)
       |> Builder.def_constant("lateness_cost", lateness_cost)
-      |> Builder.constrain(
-        "s1",
-        :==,
-        LinearExpression.terms([{-earliness_cost, "x"}, {earliness_cost, "earliness_date"}])
-      )
+      |> Builder.constrain("s1" == earliness_cost * (earliness_date - "x"))
       |> Builder.def_constant("s2", 0)
       |> Builder.def_int_var("s3", {-large_constant, large_constant})
-      |> Builder.constrain(
-        "s3",
-        :==,
-        LinearExpression.terms([{lateness_cost, "x"}, {-lateness_cost, "lateness_date"}])
-      )
+      |> Builder.constrain("s3" == lateness_cost * ("x" - lateness_date))
       |> Builder.max_equality("expr", ["s1", "s2", "s3"])
       |> Builder.decision_strategy(["x"], :choose_first, :select_min_value)
 

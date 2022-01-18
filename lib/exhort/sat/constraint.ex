@@ -122,10 +122,19 @@ defmodule Exhort.SAT.Constraint do
     %Constraint{defn: {lhs, constraint, rhs, opts}}
   end
 
+  @doc """
+  Create a constraint that ensures no overlap among the variables.
+  """
+  @spec no_overlap(list(), Keyword.t()) :: Exhort.SAT.Constraint.t()
   def no_overlap(list, opts \\ []) do
     %Constraint{defn: {:no_overlap, list, opts}}
   end
 
+  @doc """
+  Create a constraint that ensures each item in the list is different in the
+  solution.
+  """
+  @spec all_different(list(), Keyword.t()) :: Exhort.SAT.Constraint.t()
   def all_different(list, opts \\ []) do
     %Constraint{defn: {:"all!=", list, opts}}
   end
