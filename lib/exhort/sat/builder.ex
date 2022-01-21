@@ -265,9 +265,13 @@ defmodule Exhort.SAT.Builder do
   @doc """
   Specify an objective to minimize `literal`.
   """
-  @spec minimize(Builder.t(), literal :: atom() | String.t() | IntVar.t()) :: Builder.t()
-  def minimize(builder, literal) do
-    %Builder{builder | objectives: builder.objectives ++ [{:minimize, literal}]}
+  defmacro minimize(builder, expression) do
+    expression = DSL.transform_expression(expression)
+
+    quote do
+      %Builder{vars: vars} = builder = unquote(builder)
+      %Builder{builder | objectives: builder.objectives ++ [{:minimize, unquote(expression)}]}
+    end
   end
 
   @doc """
