@@ -1,6 +1,6 @@
 # Exhort
 
-Beseach the maths to answer.
+Beseech the maths to answer.
 
 ## Overview
 
