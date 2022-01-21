@@ -442,8 +442,9 @@ defmodule Exhort.SAT.Builder do
       {:max_equality, name, list} ->
         add_max_equality(builder, Vars.get(vars, name), list)
 
-      {:minimize, var1} ->
-        add_minimize(builder, Vars.get(vars, var1))
+      {:minimize, expr1} ->
+        expr1 = LinearExpression.resolve(expr1, vars)
+        add_minimize(builder, expr1)
 
       {:maximize, expr1} ->
         expr1 = LinearExpression.resolve(expr1, vars)
@@ -573,8 +574,8 @@ defmodule Exhort.SAT.Builder do
     end)
   end
 
-  defp add_minimize(%Builder{res: builder_res}, %IntVar{} = var1) do
-    Nif.add_minimize_nif(builder_res, var1.res)
+  defp add_minimize(%Builder{res: builder_res}, %LinearExpression{} = expr1) do
+    Nif.add_minimize_nif(builder_res, expr1.res)
   end
 
   defp add_maximize(%Builder{res: builder_res}, %LinearExpression{} = expr1) do
