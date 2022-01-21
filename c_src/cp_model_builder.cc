@@ -750,19 +750,19 @@ extern "C"
   ERL_NIF_TERM add_minimize_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
-    IntVarWrapper *var1;
+    LinearExprWrapper *expr1;
 
     if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
     {
       return enif_make_badarg(env);
     }
 
-    if (!get_int_var(env, argv[1], &var1))
+    if (!get_linear_expression(env, argv[1], &expr1))
     {
       return enif_make_badarg(env);
     }
 
-    builder_wrapper->p->Minimize(*var1->p);
+    builder_wrapper->p->Minimize(*expr1->p);
 
     return argv[0];
   }
