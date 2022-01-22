@@ -18,6 +18,11 @@ defmodule Exhort.SAT.Expr do
 
   @comparison [:<, :<=, :==, :>=, :>, :"abs=="]
 
+  @doc """
+  Create a new expression using the DSL.
+
+  If the expression contains a comparison operator, it becomes a constraint.
+  """
   defmacro new(expr, opts \\ [])
 
   defmacro new({op, _, [_lhs, _rhs]} = expr, opts) when op in @comparison do
@@ -78,10 +83,11 @@ defmodule Exhort.SAT.Expr do
           name :: String.t(),
           start :: atom() | String.t(),
           size :: integer(),
-          stop :: atom() | String.t()
+          stop :: atom() | String.t(),
+          opts :: Keyword.t()
         ) ::
           IntervalVar.t()
-  defdelegate def_interval_var(name, start, size, stop), to: IntervalVar, as: :new
+  defdelegate def_interval_var(name, start, size, stop, opts \\ []), to: IntervalVar, as: :new
 
   @doc """
   Definite a constant. It must later be added to the model.
@@ -97,7 +103,7 @@ defmodule Exhort.SAT.Expr do
   variables in the list.
   """
   @spec no_overlap(list(), Keyword.t()) :: Constraint.t()
-  defdelegate no_overlap(list, opts), to: Constraint
+  defdelegate no_overlap(list, opts \\ []), to: Constraint
 
   @doc """
   Create a constraint on the list ensuring that each variable in the list has a

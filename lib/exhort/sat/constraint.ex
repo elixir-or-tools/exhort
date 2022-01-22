@@ -64,8 +64,11 @@ defmodule Exhort.SAT.Constraint do
   ```
   """
 
-  alias Exhort.SAT.DSL
   alias __MODULE__
+  alias Exhort.SAT.BoolVar
+  alias Exhort.SAT.DSL
+  alias Exhort.SAT.IntVar
+  alias Exhort.SAT.LinearExpression
 
   @type constraint :: :< | :<= | :== | :>= | :> | :"abs==" | :"all!=" | :no_overlap
 
@@ -117,7 +120,7 @@ defmodule Exhort.SAT.Constraint do
           constraint :: Constraint.constraint(),
           rhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),
           opts :: [{:if, BoolVar.t()}] | [{:unless, BoolVar.t()}]
-        ) :: Builder.t()
+        ) :: Constraint.t()
   def constrain(lhs, constraint, rhs, opts \\ []) do
     %Constraint{defn: {lhs, constraint, rhs, opts}}
   end

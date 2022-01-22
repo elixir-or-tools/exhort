@@ -33,6 +33,10 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
+  def new_optional_interval_var_nif(_builder, _name, _start, _size, _stop, _presence) do
+    unimplemented().on_unimplemented()
+  end
+
   def add_equal_expr1_expr2_nif(_cp_model_builder, _expr1, _expr2) do
     unimplemented().on_unimplemented()
   end

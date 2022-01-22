@@ -47,6 +47,7 @@ extern "C"
       {"new_int_var_nif", 4, new_int_var_nif},
       {"new_constant_nif", 3, new_constant_nif},
       {"new_interval_var_nif", 5, new_interval_var_nif},
+      {"new_optional_interval_var_nif", 6, new_optional_interval_var_nif},
       {"only_enforce_if_nif", 2, only_enforce_if_nif},
       {"solution_bool_value_nif", 2, solution_bool_value_nif},
       {"solution_integer_value_nif", 2, solution_integer_value_nif},

@@ -166,6 +166,47 @@ extern "C"
     return make_interval_var(env, v);
   }
 
+  ERL_NIF_TERM new_optional_interval_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+    LinearExprWrapper *var1;
+    LinearExprWrapper *var2;
+    LinearExprWrapper *var3;
+    BoolVarWrapper *var4;
+    ErlNifBinary name;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    enif_inspect_iolist_as_binary(env, argv[1], &name);
+
+    if (!get_linear_expression(env, argv[2], &var1))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[3], &var2))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_linear_expression(env, argv[4], &var3))
+    {
+      return enif_make_badarg(env);
+    }
+
+    if (!get_bool_var(env, argv[5], &var4))
+    {
+      return enif_make_badarg(env);
+    }
+
+    IntervalVar v = builder_wrapper->p->NewOptionalIntervalVar(*var1->p, *var2->p, *var3->p, *var4->p).WithName((char *)name.data);
+
+    return make_interval_var(env, v);
+  }
+
   ERL_NIF_TERM add_abs_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;

@@ -100,14 +100,17 @@ defmodule Exhort.SAT.Builder do
   @doc """
   Define an interval variable in the model.
 
-  See https://developers.google.com/optimization/reference/python/sat/python/cp_model#intervalvar
+  See
+  https://developers.google.com/optimization/reference/python/sat/python/cp_model#intervalvar
 
   - `name` is the variable name
   - `start` is the start of the interval
   - `size` is the size of the interval
   - `stop` is the end of the interval
+  - `opts` may specify `if: bool_var`, where `bool_var` being a previously
+    defined boolean variable
   """
-  def def_interval_var(%Builder{vars: vars} = builder, name, start, size, stop) do
+  def def_interval_var(%Builder{vars: vars} = builder, name, start, size, stop, opts \\ []) do
     %Builder{
       builder
       | vars:
@@ -115,7 +118,8 @@ defmodule Exhort.SAT.Builder do
             name: name,
             start: start,
             size: size,
-            stop: stop
+            stop: stop,
+            opts: opts
           })
     }
   end
@@ -350,7 +354,14 @@ defmodule Exhort.SAT.Builder do
           %IntVar{res: res} = new_constant(builder, name, constant)
           Vars.add(vars, %IntVar{var | res: res})
 
-        %IntervalVar{name: name, start: start, size: size, stop: stop} = var, vars ->
+        %IntervalVar{
+          name: name,
+          start: start,
+          size: size,
+          stop: stop,
+          opts: [if: presence]
+        } = var,
+        vars ->
           start =
             Vars.get(vars, start)
             |> LinearExpression.resolve(vars)
@@ -361,14 +372,40 @@ defmodule Exhort.SAT.Builder do
             Vars.get(vars, stop)
             |> LinearExpression.resolve(vars)
 
-          %IntervalVar{res: res} = new_interval_var(builder, name, start, size, stop)
+          presence = BoolVar.resolve(presence, vars)
+
+          %IntervalVar{res: res} =
+            new_interval_var(builder, name, start, size, stop, if: presence)
 
           Vars.add(vars, %IntervalVar{
             var
             | res: res,
               start: start,
               size: size,
-              stop: stop
+              stop: stop,
+              opts: [if: presence]
+          })
+
+        %IntervalVar{name: name, start: start, size: size, stop: stop, opts: opts} = var, vars ->
+          start =
+            Vars.get(vars, start)
+            |> LinearExpression.resolve(vars)
+
+          size = LinearExpression.resolve(size, vars)
+
+          stop =
+            Vars.get(vars, stop)
+            |> LinearExpression.resolve(vars)
+
+          %IntervalVar{res: res} = new_interval_var(builder, name, start, size, stop, opts)
+
+          Vars.add(vars, %IntervalVar{
+            var
+            | res: res,
+              start: start,
+              size: size,
+              stop: stop,
+              opts: opts
           })
       end)
 
@@ -474,7 +511,30 @@ defmodule Exhort.SAT.Builder do
     %IntVar{res: res, name: name, domain: value}
   end
 
-  defp new_interval_var(%{res: res} = _cp_model_builder, name, start, size, stop) do
+  defp new_interval_var(%{res: res} = _cp_model_builder, name, start, size, stop, [
+         {:if, presence}
+       ]) do
+    res =
+      Nif.new_optional_interval_var_nif(
+        res,
+        to_str(name),
+        start.res,
+        size.res,
+        stop.res,
+        presence.res
+      )
+
+    %IntervalVar{
+      res: res,
+      name: name,
+      start: start,
+      size: size,
+      stop: stop,
+      opts: [{:if, presence}]
+    }
+  end
+
+  defp new_interval_var(%{res: res} = _cp_model_builder, name, start, size, stop, []) do
     res = Nif.new_interval_var_nif(res, to_str(name), start.res, size.res, stop.res)
     %IntervalVar{res: res, name: name, start: start, size: size, stop: stop}
   end

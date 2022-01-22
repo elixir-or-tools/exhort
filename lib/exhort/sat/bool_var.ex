@@ -4,6 +4,9 @@ defmodule Exhort.SAT.BoolVar do
   """
 
   alias __MODULE__
+  alias Exhort.SAT.LinearExpression
+  alias Exhort.NIF.Nif
+  alias Exhort.SAT.Vars
 
   @type t :: %__MODULE__{}
   defstruct [:res, :name]
@@ -19,5 +22,47 @@ defmodule Exhort.SAT.BoolVar do
   @spec new(name :: String.t()) :: BoolVar.t()
   def new(name) do
     %BoolVar{name: name}
+  end
+
+  @doc """
+  Resolve to a boolean variable for cases in which a boolean variable is
+  required.
+  """
+  @spec resolve(var :: atom() | String.t() | BoolVar.t(), map()) :: BoolVar.t()
+  def resolve(
+        %LinearExpression{res: nil, expr: {:not, %BoolVar{res: nil} = var}},
+        vars
+      ) do
+    var = Vars.get(vars, var)
+    %BoolVar{res: Nif.bool_not_nif(var.res), name: "not #{var.name}"}
+  end
+
+  def resolve(
+        %LinearExpression{res: nil, expr: {:not, %BoolVar{} = var}},
+        _vars
+      ) do
+    %BoolVar{res: Nif.bool_not_nif(var.res), name: "not #{var.name}"}
+  end
+
+  def resolve(
+        %LinearExpression{res: nil, expr: {:not, literal}},
+        vars
+      ) do
+    var = Vars.get(vars, literal)
+    %BoolVar{res: Nif.bool_not_nif(var.res), name: "not #{var.name}"}
+  end
+
+  def resolve(%BoolVar{res: nil} = var, vars) do
+    Vars.get(vars, var)
+  end
+
+  def resolve(%BoolVar{} = var, _vars) do
+    var
+  end
+
+  def resolve(literal, vars) do
+    vars
+    |> Vars.get(literal)
+    |> resolve(vars)
   end
 end

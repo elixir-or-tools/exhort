@@ -17,6 +17,8 @@ extern "C"
 
   ERL_NIF_TERM new_interval_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
+  ERL_NIF_TERM new_optional_interval_var_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
   ERL_NIF_TERM add_abs_equal_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM add_abs_equal_constant_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
