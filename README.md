@@ -28,7 +28,7 @@ On MacOS, ensure the latest command line tools are installed. Currently, 13.2 is
 the latest. You can check with:
 
 ```sh
-$ pkgutil --pkg-info=com.apple.pkg.CLTools_Executables
+pkgutil --pkg-info=com.apple.pkg.CLTools_Executables
 ```
 
 https://developer.apple.com/download/all/
@@ -41,14 +41,15 @@ If there's a problem updating your tools, you might have to do it manually.
 Next, install the or-tools from Homebrew:
 
 ```sh
-$ brew install or-tools
+brew install or-tools
 ```
 
 Then:
 
 ```sh
-$ mix compile
-$ mix test
+mix deps.get
+mix compile
+mix test
 ```
 
 ## Getting Started
@@ -60,9 +61,9 @@ Start [Livebook](https://livebook.dev/) and open a notebook (use whatever method
 you like to start Livebook).
 
 ```sh
-$ mix escript.install hex livebook
+mix escript.install hex livebook
 # if installed in `asdf` use `asdf reshim`
-$ livebook server --name livebook@127.0.0.1
+livebook server --name livebook@127.0.0.1
 ```
 
 1. Use the link that is written to the console and browse the samples.
