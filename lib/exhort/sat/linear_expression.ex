@@ -13,7 +13,7 @@ defmodule Exhort.SAT.LinearExpression do
   """
 
   @type t :: %__MODULE__{}
-  defstruct res: nil, expr: [], expressions: []
+  defstruct res: nil, expr: []
 
   alias __MODULE__
   alias Exhort.NIF.Nif
