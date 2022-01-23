@@ -32,6 +32,32 @@ defmodule Exhort.SAT.LinearExpression do
   def resolve(
         %LinearExpression{
           res: nil,
+          expr: {:not, %BoolVar{} = var1}
+        } = expr,
+        vars
+      ) do
+    var1 = Vars.get(vars, var1)
+    bool_res = Nif.bool_not_nif(var1.res)
+    expr_nif = Nif.expr_from_bool_var_nif(bool_res)
+    %LinearExpression{expr | res: expr_nif}
+  end
+
+  def resolve(
+        %LinearExpression{
+          res: nil,
+          expr: {:not, literal1}
+        } = expr,
+        vars
+      ) do
+    var1 = Vars.get(vars, literal1)
+    bool_res = Nif.bool_not_nif(var1.res)
+    expr_nif = Nif.expr_from_bool_var_nif(bool_res)
+    %LinearExpression{expr | res: expr_nif}
+  end
+
+  def resolve(
+        %LinearExpression{
+          res: nil,
           expr: {:sum, sum_list}
         } = expr,
         vars
