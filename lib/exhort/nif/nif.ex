@@ -85,6 +85,10 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
+  def add_implication_nif(_builder, _var1, _var2) do
+    unimplemented().on_unimplemented()
+  end
+
   def add_all_different_nif(_builder, _var_list) do
     unimplemented().on_unimplemented()
   end

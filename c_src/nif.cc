@@ -29,6 +29,7 @@ extern "C"
       {"add_all_different_nif", 2, add_all_different_nif},
       {"add_decision_strategy_nif", 4, add_decision_strategy_nif},
       {"add_no_overlap_nif", 2, add_no_overlap_nif},
+      {"add_implication_nif", 3, add_implication_nif},
       {"add_equal_expr1_expr2_nif", 3, add_equal_expr1_expr2_nif},
       {"add_equal_expr1_constant2_nif", 3, add_equal_expr1_constant2_nif},
       {"add_equal_int_nif", 3, add_equal_int_nif},

@@ -96,7 +96,19 @@ defmodule Exhort.SAT.Expr do
           name :: String.t() | atom(),
           value :: integer()
         ) :: IntVar.t()
-  defdelegate(def_constant(name, value), to: IntVar, as: :new)
+  defdelegate def_constant(name, value), to: IntVar, as: :new
+
+  @doc """
+  Add an implication constraint where `bool1` implies `bool2`.
+  """
+  defmacro implication(bool1, bool2) do
+    expr1 = DSL.transform_expression(bool1)
+    expr2 = DSL.transform_expression(bool2)
+
+    quote do
+      Constraint.implication(unquote(expr1), unquote(expr2))
+    end
+  end
 
   @doc """
   Create a constraint on the list ensuring there are no overlap among the

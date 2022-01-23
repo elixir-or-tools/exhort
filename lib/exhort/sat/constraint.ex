@@ -126,6 +126,13 @@ defmodule Exhort.SAT.Constraint do
   end
 
   @doc """
+  Add an implication constraint where `bool1` implies `bool2`.
+  """
+  def implication(bool1, bool2) do
+    %Constraint{defn: {:implication, bool1, bool2}}
+  end
+
+  @doc """
   Create a constraint that ensures no overlap among the variables.
   """
   @spec no_overlap(list(), Keyword.t()) :: Exhort.SAT.Constraint.t()

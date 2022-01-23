@@ -462,6 +462,12 @@ defmodule Exhort.SAT.Builder do
 
           %Constraint{constraint | res: res}
 
+        %Constraint{defn: {:implication, lhs, rhs}} = constraint ->
+          lhs = BoolVar.resolve(lhs, vars)
+          rhs = BoolVar.resolve(rhs, vars)
+          res = add_implication(builder, lhs, rhs)
+          %Constraint{constraint | res: res}
+
         %Constraint{defn: {:"all!=", list, opts}} = constraint ->
           list = Enum.map(list, &LinearExpression.resolve(&1, vars))
           res = builder |> add_all_different(list) |> modify(opts, vars)
@@ -581,6 +587,10 @@ defmodule Exhort.SAT.Builder do
 
   defp add_abs_equal(cp_model_builder, int1, %IntVar{} = var2) when is_integer(int1) do
     Nif.add_abs_equal_constant_nif(cp_model_builder.res, int1, var2.res)
+  end
+
+  defp add_implication(cp_model_builder, %BoolVar{} = var1, %BoolVar{} = var2) do
+    Nif.add_implication_nif(cp_model_builder.res, var1.res, var2.res)
   end
 
   defp add_all_different(%Builder{res: builder_res} = _builder, list) do
