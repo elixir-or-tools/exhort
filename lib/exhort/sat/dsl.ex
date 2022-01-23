@@ -42,6 +42,12 @@ defmodule Exhort.SAT.DSL do
     end
   end
 
+  defp transform({:not, _, [args]}) do
+    quote do
+      LinearExpression.bool_not(unquote(transform(args)))
+    end
+  end
+
   defp transform([head | []]), do: [transform(head)]
   defp transform([head | tail]), do: [transform(head) | transform(tail)]
 

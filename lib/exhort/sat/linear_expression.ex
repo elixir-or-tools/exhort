@@ -234,6 +234,14 @@ defmodule Exhort.SAT.LinearExpression do
   end
 
   @doc """
+  Create a linear expression as the sum of `var1` and `var2`.
+  """
+  @spec bool_not(BoolVar.t()) :: LinearExpression.t()
+  def bool_not(var1) do
+    %LinearExpression{expr: {:not, var1}}
+  end
+
+  @doc """
   Create a linear expression as the difference of `var1` and `var2`.
   """
   @spec minus(eterm(), eterm()) :: LinearExpression.t()

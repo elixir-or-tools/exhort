@@ -25,6 +25,8 @@ extern "C"
 
   static ErlNifFunc nif_funcs[] = {
       {"add_abs_equal_nif", 3, add_abs_equal_nif},
+      {"add_bool_and_nif", 2, add_bool_and_nif},
+      {"add_bool_or_nif", 2, add_bool_or_nif},
       {"add_abs_equal_constant_nif", 3, add_abs_equal_constant_nif},
       {"add_all_different_nif", 2, add_all_different_nif},
       {"add_decision_strategy_nif", 4, add_decision_strategy_nif},

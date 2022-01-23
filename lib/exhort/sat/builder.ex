@@ -468,6 +468,16 @@ defmodule Exhort.SAT.Builder do
           res = add_implication(builder, lhs, rhs)
           %Constraint{constraint | res: res}
 
+        %Constraint{defn: {:or, list}} = constraint ->
+          list = Enum.map(list, &BoolVar.resolve(&1, vars))
+          res = add_bool_or(builder, list)
+          %Constraint{constraint | res: res}
+
+        %Constraint{defn: {:and, list}} = constraint ->
+          list = Enum.map(list, &BoolVar.resolve(&1, vars))
+          res = add_bool_and(builder, list)
+          %Constraint{constraint | res: res}
+
         %Constraint{defn: {:"all!=", list, opts}} = constraint ->
           list = Enum.map(list, &LinearExpression.resolve(&1, vars))
           res = builder |> add_all_different(list) |> modify(opts, vars)
@@ -631,6 +641,26 @@ defmodule Exhort.SAT.Builder do
 
   defp bool_not(%BoolVar{} = var) do
     %BoolVar{var | res: Nif.bool_not_nif(var.res)}
+  end
+
+  defp add_bool_or(%Builder{res: builder_res, vars: _vars} = _builder, list) do
+    list
+    |> Enum.map(& &1.res)
+    |> then(fn var_list ->
+      Nif.add_bool_or_nif(builder_res, var_list)
+    end)
+  end
+
+  defp add_bool_and(%Builder{res: builder_res, vars: vars} = _builder, list) do
+    list
+    |> Enum.map(fn var ->
+      vars
+      |> Vars.get(var)
+      |> then(& &1.res)
+    end)
+    |> then(fn var_list ->
+      Nif.add_bool_and_nif(builder_res, var_list)
+    end)
   end
 
   defp add_max_equality(%Builder{res: builder_res, vars: vars}, %IntVar{} = var1, list) do

@@ -629,6 +629,108 @@ extern "C"
     return term;
   }
 
+  ERL_NIF_TERM add_bool_and_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    unsigned int list_length;
+    if (!enif_get_list_length(env, argv[1], &list_length))
+    {
+      return enif_make_badarg(env);
+    }
+
+    std::vector<BoolVar> vars;
+    ERL_NIF_TERM head;
+    ERL_NIF_TERM tail;
+    ERL_NIF_TERM current = argv[1];
+    for (int i = 0; i < list_length; ++i)
+    {
+      if (!enif_get_list_cell(env, current, &head, &tail))
+      {
+        return enif_make_badarg(env);
+      }
+
+      BoolVarWrapper *var;
+      if (!get_bool_var(env, head, &var))
+      {
+        return enif_make_badarg(env);
+      }
+
+      vars.push_back(*var->p);
+
+      current = tail;
+    }
+
+    Constraint constraint = builder_wrapper->p->AddBoolAnd(vars);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
+  ERL_NIF_TERM add_bool_or_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BuilderWrapper *builder_wrapper;
+
+    if (!enif_get_resource(env, argv[0], CP_MODEL_BUILDER_WRAPPER, (void **)&builder_wrapper))
+    {
+      return enif_make_badarg(env);
+    }
+
+    unsigned int list_length;
+    if (!enif_get_list_length(env, argv[1], &list_length))
+    {
+      return enif_make_badarg(env);
+    }
+
+    std::vector<BoolVar> vars;
+    ERL_NIF_TERM head;
+    ERL_NIF_TERM tail;
+    ERL_NIF_TERM current = argv[1];
+    for (int i = 0; i < list_length; ++i)
+    {
+      if (!enif_get_list_cell(env, current, &head, &tail))
+      {
+        return enif_make_badarg(env);
+      }
+
+      BoolVarWrapper *var;
+      if (!get_bool_var(env, head, &var))
+      {
+        return enif_make_badarg(env);
+      }
+
+      vars.push_back(*var->p);
+
+      current = tail;
+    }
+
+    Constraint constraint = builder_wrapper->p->AddBoolOr(vars);
+
+    ConstraintWrapper *constraint_wrapper = (ConstraintWrapper *)enif_alloc_resource(CONSTRAINT_WRAPPER, sizeof(ConstraintWrapper));
+    if (constraint_wrapper == NULL)
+      return enif_make_badarg(env);
+
+    constraint_wrapper->p = new Constraint(constraint);
+
+    ERL_NIF_TERM term = enif_make_resource(env, constraint_wrapper);
+    enif_release_resource(constraint_wrapper);
+
+    return term;
+  }
+
   ERL_NIF_TERM add_all_different_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
   {
     BuilderWrapper *builder_wrapper;
@@ -846,19 +948,6 @@ extern "C"
     constraint_wrapper->p->OnlyEnforceIf(*var->p);
 
     return argv[0];
-  }
-
-  ERL_NIF_TERM bool_not_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-  {
-    BoolVarWrapper *var;
-
-    if (!get_bool_var(env, argv[0], &var))
-    {
-      return enif_make_badarg(env);
-    }
-
-    BoolVar v(var->p->Not());
-    return make_bool_var(env, v);
   }
 
   ERL_NIF_TERM add_implication_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])

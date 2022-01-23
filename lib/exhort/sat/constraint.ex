@@ -133,6 +133,22 @@ defmodule Exhort.SAT.Constraint do
   end
 
   @doc """
+  Create a constraint that requires one of the booleans in the list to be true.
+  """
+  @spec bool_or(list()) :: Exhort.SAT.Constraint.t()
+  def bool_or(list) do
+    %Constraint{defn: {:or, list}}
+  end
+
+  @doc """
+  Create longical and constraint on the list of booleans.
+  """
+  @spec bool_and(list()) :: Exhort.SAT.Constraint.t()
+  def bool_and(list) do
+    %Constraint{defn: {:and, list}}
+  end
+
+  @doc """
   Create a constraint that ensures no overlap among the variables.
   """
   @spec no_overlap(list(), Keyword.t()) :: Exhort.SAT.Constraint.t()

@@ -10,6 +10,8 @@ extern "C"
 
   int get_bool_var(ErlNifEnv *env, ERL_NIF_TERM term, BoolVarWrapper **obj);
 
+  ERL_NIF_TERM bool_not_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
   ERL_NIF_TERM make_bool_var(ErlNifEnv *env, BoolVar &from_bool_var);
 }
 

@@ -123,4 +123,20 @@ defmodule Exhort.SAT.Expr do
   """
   @spec all_different(list(), Keyword.t()) :: Constraint.t()
   defdelegate all_different(list, opts), to: Constraint
+
+  defmacro bool_and(list) when is_list(list) do
+    expr_list = Enum.map(list, &DSL.transform_expression(&1))
+
+    quote do
+      Constraint.bool_and(unquote(expr_list))
+    end
+  end
+
+  defmacro bool_or(list) when is_list(list) do
+    expr_list = Enum.map(list, &DSL.transform_expression(&1))
+
+    quote do
+      Constraint.bool_or(unquote(expr_list))
+    end
+  end
 end

@@ -37,6 +37,19 @@ extern "C"
     return term;
   }
 
+  ERL_NIF_TERM bool_not_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+  {
+    BoolVarWrapper *var;
+
+    if (!get_bool_var(env, argv[0], &var))
+    {
+      return enif_make_badarg(env);
+    }
+
+    BoolVar v(var->p->Not());
+    return make_bool_var(env, v);
+  }
+
   int load_bool_var(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
   {
     if (init_types(env) == -1)

@@ -97,6 +97,14 @@ defmodule Exhort.NIF.Nif do
     unimplemented().on_unimplemented()
   end
 
+  def add_bool_or_nif(_builder, _var_list) do
+    unimplemented().on_unimplemented()
+  end
+
+  def add_bool_and_nif(_builder, _var_list) do
+    unimplemented().on_unimplemented()
+  end
+
   def bool_not_nif(_var) do
     unimplemented().on_unimplemented()
   end

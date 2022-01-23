@@ -29,6 +29,10 @@ extern "C"
 
   ERL_NIF_TERM add_implication_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
+  ERL_NIF_TERM add_bool_and_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
+  ERL_NIF_TERM add_bool_or_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
+
   ERL_NIF_TERM add_no_overlap_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM add_equal_int_var_plus_int_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
@@ -52,8 +56,6 @@ extern "C"
   ERL_NIF_TERM add_less_or_equal_expr1_expr2_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM only_enforce_if_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
-
-  ERL_NIF_TERM bool_not_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
   ERL_NIF_TERM solve_nif(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]);
 
