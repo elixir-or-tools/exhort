@@ -1,0 +1,176 @@
+# Ranking Sample
+
+## Section
+
+Code sample to demonstrates how to rank intervals.
+
+```elixir
+use Exhort.SAT.Builder
+```
+
+## Ranking Sample Sat
+
+Ranks tasks in a `no_overlap` constraint.
+
+```elixir
+horizon = 100
+num_tasks = 4
+all_tasks = 0..3
+
+tasks =
+  for task <- all_tasks do
+    duration = task + 1
+    presence = task < div(num_tasks, 2)
+
+    [
+      Expr.def_int_var("starts_#{task}", {0, horizon}),
+      Expr.def_int_var("ends_#{task}", {0, horizon}),
+      Expr.def_bool_var("presence_#{task}"),
+      if(presence, do: Expr.new("presence_#{task}" == 1)),
+      Expr.def_interval_var("o_interval_#{task}", "starts_#{task}", duration, "ends_#{task}",
+        if: "presence_#{task}"
+      ),
+      Expr.def_int_var("ranks_#{task}", {-1, num_tasks - 1})
+    ]
+  end
+  |> List.flatten()
+  |> Enum.filter(fn item -> item end)
+```
+
+```elixir
+no_overlap_intervals = Expr.no_overlap(for task <- all_tasks, do: "o_interval_#{task}")
+```
+
+## Rank Tasks
+
+Add constraints and variables to links tasks and ranks.
+
+Assumes that all starts are disjoint, meaning that all tasks have
+a strictly positive duration, and they appear in the same `:no_overlap`
+constraint.
+
+<!-- livebook:{"break_markdown":true} -->
+
+### Precedence variables
+
+Creates precedence variables between pairs of intervals.
+
+```elixir
+presedence_defs =
+  for i <- all_tasks, j <- all_tasks do
+    if i == j do
+      {{i, j}, "presence_#{i}"}
+    else
+      i_before_j = "#{i} before #{j}"
+
+      {
+        Expr.def_bool_var(i_before_j),
+        Expr.new("starts_#{i}" < "starts_#{j}", if: i_before_j),
+        {{i, j}, i_before_j}
+      }
+    end
+  end
+
+precedences =
+  presedence_defs
+  |> Enum.map(fn
+    {_, _, ij} -> ij
+    ij -> ij
+  end)
+  |> Enum.into(%{})
+```
+
+```elixir
+precedence_constraints =
+  presedence_defs
+  |> Enum.filter(fn
+    {_, _} -> false
+    {_, _, _} -> true
+  end)
+  |> Enum.map(fn {bool, const, _} -> [bool, const] end)
+  |> List.flatten()
+```
+
+### Optional intervals
+
+```elixir
+optional_intervals =
+  for i <- Enum.take(all_tasks, Range.size(all_tasks) - 1),
+      j <- Range.new(i + 1, num_tasks - 1) do
+    # {i, j} |> IO.inspect()
+    # precedences[{i, j}] |> IO.inspect()
+    # precedences[{j, i}] |> IO.inspect()
+    # precedences[{i, j}] |> IO.inspect()
+    [
+      Expr.implication(not "presence_#{i}", not precedences[{i, j}]),
+      Expr.implication(not "presence_#{i}", not precedences[{j, i}]),
+      Expr.implication(not "presence_#{j}", not precedences[{i, j}]),
+      Expr.bool_or([
+        precedences[{i, j}],
+        precedences[{j, i}],
+        not "presence_#{i}",
+        not "presence_#{j}"
+      ]),
+      Expr.implication(precedences[{i, j}], not precedences[{j, i}]),
+      Expr.implication(precedences[{j, i}], not precedences[{i, j}])
+    ]
+  end
+  |> List.flatten()
+```
+
+Links precedences and ranks
+
+```elixir
+precedences_to_ranks =
+  for i <- all_tasks do
+    Expr.new("ranks_#{i}" == sum(for j <- all_tasks, do: precedences[{j, i}]) - 1)
+  end
+```
+
+```elixir
+rank_0 = Expr.new("ranks_0" < "ranks_1")
+makespan = Expr.def_int_var("makespan", {0, horizon})
+
+makespan_constraints =
+  for task <- all_tasks do
+    Expr.new("ends_#{task}" <= makespan, if: "presence_#{task}")
+  end
+```
+
+## Solution
+
+Solve the model.
+
+```elixir
+response =
+  Builder.new()
+  |> Builder.add(tasks)
+  |> Builder.add(no_overlap_intervals)
+  |> Builder.add(precedence_constraints)
+  |> Builder.add(optional_intervals)
+  |> Builder.add(precedences_to_ranks)
+  |> Builder.add(rank_0)
+  |> Builder.add(makespan)
+  |> Builder.add(makespan_constraints)
+  |> Builder.minimize(2 * makespan - 7 * sum(for task <- all_tasks, do: "presence_#{task}"))
+  |> Builder.build()
+  |> Model.solve()
+
+SolverResponse.stats(response)
+```
+
+```elixir
+IO.puts("makespan: #{SolverResponse.int_val(response, "makespan")}")
+
+for task <- all_tasks do
+  if SolverResponse.bool_val(response, "presence_#{task}") do
+    IO.puts(
+      "task #{task} starts at #{SolverResponse.int_val(response, "starts_#{task}")} and has rank #{SolverResponse.int_val(response, "ranks_#{task}")}"
+    )
+  else
+    IO.puts(
+      "task #{task} is not performed and has rank #{SolverResponse.int_val(response, "ranks_#{task}")}"
+    )
+  end
+end
+```
