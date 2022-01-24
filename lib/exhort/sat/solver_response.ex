@@ -58,7 +58,7 @@ defmodule Exhort.SAT.SolverResponse do
   @doc """
   Get the corresponding value of the boolean variable.
   """
-  @spec bool_val(SolverResponse.t(), literal :: String.t() | atom()) :: integer()
+  @spec bool_val(SolverResponse.t(), literal :: String.t() | atom() | BoolVar.t()) :: boolean()
   def bool_val(response, var) do
     SolverResponse.get_bool_val(response, var)
   end
@@ -68,6 +68,14 @@ defmodule Exhort.SAT.SolverResponse do
   def get_int_val(%SolverResponse{status: status}, _)
       when status in [:unknown, :model_invalid, :infeasible] do
     nil
+  end
+
+  def get_int_val(%SolverResponse{res: response_res, model: %{vars: vars}}, %IntVar{
+        res: nil,
+        name: literal
+      }) do
+    %IntVar{res: var_res} = Vars.get(vars, literal)
+    Nif.solution_integer_value_nif(response_res, var_res)
   end
 
   def get_int_val(%SolverResponse{res: response_res}, %IntVar{res: var_res}) do
@@ -80,14 +88,22 @@ defmodule Exhort.SAT.SolverResponse do
   end
 
   @spec get_bool_val(SolverResponse.t(), var :: atom() | String.t() | BoolVar.t()) ::
-          nil | integer()
+          nil | boolean()
   def get_bool_val(%SolverResponse{status: status}, _)
       when status in [:unknown, :model_invalid, :infeasible] do
     nil
   end
 
+  def get_bool_val(%SolverResponse{res: response_res, model: %{vars: vars}}, %BoolVar{
+        res: nil,
+        name: literal
+      }) do
+    %BoolVar{res: var_res} = Vars.get(vars, literal)
+    Nif.solution_bool_value_nif(response_res, var_res) == 1
+  end
+
   def get_bool_val(%SolverResponse{res: response_res}, %BoolVar{res: var_res}) do
-    Nif.solution_integer_value_nif(response_res, var_res)
+    Nif.solution_bool_value_nif(response_res, var_res) == 1
   end
 
   def get_bool_val(%SolverResponse{res: response_res, model: %{vars: vars}}, literal) do
