@@ -1,4 +1,4 @@
-defmodule Samples.Exhort.SAT.RabbitsAndPheasantsTest do
+defmodule Samples.Exhort.SAT.RankingSampleTest do
   use ExUnit.Case
   use Exhort.SAT.Builder
 
