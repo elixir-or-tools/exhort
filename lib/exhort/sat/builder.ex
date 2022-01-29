@@ -39,8 +39,6 @@ defmodule Exhort.SAT.Builder do
       require Exhort.SAT.Builder
       require Exhort.SAT.Constraint
       require Exhort.SAT.Expr
-      require Exhort.SAT.LinearExpression
-      require Exhort.SAT.SolverResponse
     end
   end
 
