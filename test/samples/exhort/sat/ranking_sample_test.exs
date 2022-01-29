@@ -158,15 +158,17 @@ defmodule Samples.Exhort.SAT.RankingSampleTest do
 
     assert %{objective: -9.0, status: :optimal} = SolverResponse.stats(response)
 
-    assert 6 == SolverResponse.int_val(response, "makespan")
+    assert 6 == SolverResponse.value(response, makespan)
 
     task_results =
       for task <- all_tasks do
-        if SolverResponse.bool_val(response, presences[task]) do
-          {SolverResponse.int_val(response, starts[task]),
-           SolverResponse.int_val(response, ranks[task])}
+        if SolverResponse.value(response, presences[task]) do
+          {
+            SolverResponse.value(response, starts[task]),
+            SolverResponse.value(response, ranks[task])
+          }
         else
-          SolverResponse.int_val(response, ranks[task])
+          SolverResponse.value(response, ranks[task])
         end
       end
 

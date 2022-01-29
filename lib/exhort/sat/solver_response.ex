@@ -48,11 +48,23 @@ defmodule Exhort.SAT.SolverResponse do
   end
 
   @doc """
+  Get a variable value from the response.
+  """
+  @spec value(SolverResponse.t(), var :: BoolVar.t() | IntVar.t()) :: boolean() | integer()
+  def value(response, %BoolVar{} = var) do
+    bool_val(response, var)
+  end
+
+  def value(response, %IntVar{} = var) do
+    int_val(response, var)
+  end
+
+  @doc """
   Get the corresponding value of the integer variable.
   """
-  @spec int_val(SolverResponse.t(), literal :: String.t() | atom()) :: integer()
+  @spec int_val(SolverResponse.t(), var :: String.t() | atom() | IntVar.t()) :: integer()
   def int_val(response, var) do
-    SolverResponse.get_int_val(response, var)
+    get_int_val(response, var)
   end
 
   @doc """
@@ -60,53 +72,53 @@ defmodule Exhort.SAT.SolverResponse do
   """
   @spec bool_val(SolverResponse.t(), literal :: String.t() | atom() | BoolVar.t()) :: boolean()
   def bool_val(response, var) do
-    SolverResponse.get_bool_val(response, var)
+    get_bool_val(response, var)
   end
 
   @spec get_int_val(SolverResponse.t(), var :: atom() | String.t() | IntVar.t()) ::
           nil | integer()
-  def get_int_val(%SolverResponse{status: status}, _)
-      when status in [:unknown, :model_invalid, :infeasible] do
+  defp get_int_val(%SolverResponse{status: status}, _)
+       when status in [:unknown, :model_invalid, :infeasible] do
     nil
   end
 
-  def get_int_val(%SolverResponse{res: response_res, model: %{vars: vars}}, %IntVar{
-        res: nil,
-        name: literal
-      }) do
+  defp get_int_val(%SolverResponse{res: response_res, model: %{vars: vars}}, %IntVar{
+         res: nil,
+         name: literal
+       }) do
     %IntVar{res: var_res} = Vars.get(vars, literal)
     Nif.solution_integer_value_nif(response_res, var_res)
   end
 
-  def get_int_val(%SolverResponse{res: response_res}, %IntVar{res: var_res}) do
+  defp get_int_val(%SolverResponse{res: response_res}, %IntVar{res: var_res}) do
     Nif.solution_integer_value_nif(response_res, var_res)
   end
 
-  def get_int_val(%SolverResponse{res: response_res, model: %{vars: vars}}, literal) do
+  defp get_int_val(%SolverResponse{res: response_res, model: %{vars: vars}}, literal) do
     %IntVar{res: var_res} = Vars.get(vars, literal)
     Nif.solution_integer_value_nif(response_res, var_res)
   end
 
   @spec get_bool_val(SolverResponse.t(), var :: atom() | String.t() | BoolVar.t()) ::
           nil | boolean()
-  def get_bool_val(%SolverResponse{status: status}, _)
-      when status in [:unknown, :model_invalid, :infeasible] do
+  defp get_bool_val(%SolverResponse{status: status}, _)
+       when status in [:unknown, :model_invalid, :infeasible] do
     nil
   end
 
-  def get_bool_val(%SolverResponse{res: response_res, model: %{vars: vars}}, %BoolVar{
-        res: nil,
-        name: literal
-      }) do
+  defp get_bool_val(%SolverResponse{res: response_res, model: %{vars: vars}}, %BoolVar{
+         res: nil,
+         name: literal
+       }) do
     %BoolVar{res: var_res} = Vars.get(vars, literal)
     Nif.solution_bool_value_nif(response_res, var_res) == 1
   end
 
-  def get_bool_val(%SolverResponse{res: response_res}, %BoolVar{res: var_res}) do
+  defp get_bool_val(%SolverResponse{res: response_res}, %BoolVar{res: var_res}) do
     Nif.solution_bool_value_nif(response_res, var_res) == 1
   end
 
-  def get_bool_val(%SolverResponse{res: response_res, model: %{vars: vars}}, literal) do
+  defp get_bool_val(%SolverResponse{res: response_res, model: %{vars: vars}}, literal) do
     %BoolVar{res: var_res} = Vars.get(vars, literal)
     Nif.solution_bool_value_nif(response_res, var_res) == 1
   end
