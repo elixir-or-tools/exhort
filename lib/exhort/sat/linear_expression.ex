@@ -51,17 +51,21 @@ defmodule Exhort.SAT.LinearExpression do
     resolve_sum(expr, sum_list, vars)
   end
 
-  def resolve(%LinearExpression{res: nil, expr: {:prod, %BoolVar{} = var1, int2}} = expr, _vars)
+  def resolve(%LinearExpression{res: nil, expr: {:prod, %BoolVar{} = var1, int2}} = expr, vars)
       when is_integer(int2) do
+    var1 = Vars.get(vars, var1)
+
     Nif.prod_bool_var1_constant2_nif(var1.res, int2)
     |> then(&%LinearExpression{expr | res: &1})
   end
 
   def resolve(
         %LinearExpression{res: nil, expr: {:prod, %IntVar{} = var1, int2}} = expr,
-        _vars
+        vars
       )
       when is_integer(int2) do
+    var1 = Vars.get(vars, var1)
+
     Nif.prod_int_var1_constant2_nif(var1.res, int2)
     |> then(&%LinearExpression{expr | res: &1})
   end
@@ -95,9 +99,9 @@ defmodule Exhort.SAT.LinearExpression do
     resolve(%LinearExpression{expr | expr: {:prod, var1, int2}}, vars)
   end
 
-  def resolve(%LinearExpression{res: nil, expr: {:prod, int1, sym2}} = expr, vars)
-      when is_integer(int1) and not is_integer(sym2) do
-    var2 = Vars.get(vars, sym2)
+  def resolve(%LinearExpression{res: nil, expr: {:prod, int1, literal2}} = expr, vars)
+      when is_integer(int1) and not is_integer(literal2) do
+    var2 = Vars.get(vars, literal2)
 
     resolve(%LinearExpression{expr | expr: {:prod, var2, int1}}, vars)
   end

@@ -1,0 +1,106 @@
+<!-- vim: set syntax=markdown: -->
+
+# Multiple Knapsack
+
+## Setup
+
+```elixir
+use Exhort.SAT.Builder
+```
+
+## Model
+
+```elixir
+weights = [48, 30, 42, 36, 36, 48, 42, 42, 36, 24, 30, 30, 42, 36, 36]
+values = [10, 30, 25, 50, 35, 30, 15, 40, 30, 35, 45, 10, 20, 30, 25]
+num_items = length(weights)
+bin_capacities = [100, 100, 100, 100, 100]
+num_bins = length(bin_capacities)
+all_items = Range.new(0, num_items - 1)
+all_bins = Range.new(0, num_bins - 1)
+
+{all_items, all_bins}
+
+# data = %{
+#   "num_items" => num_items,
+#   "all_items" => Range.new(0, num_items - 1),
+#   "weights" => weights,
+#   "values" => values,
+#   "bin_capacities" => bin_capacities,
+#   "num_bins" => length(bin_capacities),
+#   "all_bins" => Range.new(0, num_bins - 1)
+# }
+```
+
+```elixir
+x =
+  for idx <- all_items, b <- all_bins do
+    {{idx, b}, Expr.def_int_var("x_#{idx}_#{b}", {0, 1})}
+  end
+  |> Enum.into(%{})
+```
+
+```elixir
+max_value = Enum.sum(values)
+```
+
+`value[b]` is the value of bin `b` when packed.
+
+```elixir
+value =
+  for b <- all_bins do
+    {b, Expr.def_int_var("value_#{b}", {0, max_value})}
+  end
+  |> Enum.into(%{})
+```
+
+```elixir
+value_constraints =
+  for b <- all_bins do
+    Expr.new(value[b] == sum(for i <- all_items, do: x[{i, b}] * Enum.at(values, i)))
+  end
+```
+
+## Constraints
+
+Each item can be in at most one bin.
+
+```elixir
+one_bin_per_item =
+  for idx <- all_items do
+    Expr.new(sum(for b <- all_bins, do: x[{idx, b}]) <= 1)
+  end
+```
+
+The amount packed in each bin cannot exceed its capacity.
+
+```elixir
+max_capacity_per_item =
+  for b <- all_bins do
+    Expr.new(
+      sum(for i <- all_items, do: x[{i, b}] * Enum.at(weights, i)) <=
+        Enum.at(bin_capacities, b)
+    )
+  end
+```
+
+```elixir
+builder =
+  Builder.new()
+  |> Builder.add(Map.values(x))
+  |> Builder.add(Map.values(value))
+  |> Builder.add(value_constraints)
+  |> Builder.add(one_bin_per_item)
+  |> Builder.add(max_capacity_per_item)
+  |> Builder.maximize(sum(Map.values(value)))
+```
+
+```elixir
+response =
+  builder
+  |> Builder.build()
+  |> Model.solve()
+
+response
+|> SolverResponse.stats()
+```
