@@ -5,7 +5,16 @@
 ## Setup
 
 ```elixir
+Mix.install([
+  {:exhort, git: "https://github.com/elixir-or-tools/exhort"},
+  {:vega_lite, "~> 0.1.3"},
+  {:kino, "~> 0.5.0"}
+])
+```
+
+```elixir
 use Exhort.SAT.Builder
+alias VegaLite, as: Vl
 ```
 
 ## Model
@@ -20,16 +29,6 @@ all_items = Range.new(0, num_items - 1)
 all_bins = Range.new(0, num_bins - 1)
 
 {all_items, all_bins}
-
-# data = %{
-#   "num_items" => num_items,
-#   "all_items" => Range.new(0, num_items - 1),
-#   "weights" => weights,
-#   "values" => values,
-#   "bin_capacities" => bin_capacities,
-#   "num_bins" => length(bin_capacities),
-#   "all_bins" => Range.new(0, num_bins - 1)
-# }
 ```
 
 ```elixir
@@ -103,4 +102,42 @@ response =
 
 response
 |> SolverResponse.stats()
+```
+
+## Visualize
+
+Create a table-like data structure for VegaLite
+
+```elixir
+bin_items =
+  for b <- all_bins, idx <- all_items do
+    {b, idx}
+  end
+  |> Enum.filter(fn {b, idx} ->
+    SolverResponse.value(response, x[{idx, b}]) > 0
+  end)
+  |> Enum.map(fn {b, idx} ->
+    %{
+      "bin" => b,
+      "item" => idx,
+      "weight" => Enum.at(weights, idx),
+      "value" => Enum.at(values, idx)
+    }
+  end)
+```
+
+```elixir
+Vl.new(width: 650, height: 500)
+|> Vl.data_from_values(bin_items)
+|> Vl.encode_field(:x, "bin", type: :nominal)
+|> Vl.encode_field(:y, "weight", aggregate: :sum, stack: "zero")
+|> Vl.layers([
+  Vl.new()
+  |> Vl.mark(:bar)
+  |> Vl.encode(:color, field: "item"),
+  Vl.new()
+  |> Vl.mark(:text, baseline: "bottom", fill: "black")
+  |> Vl.encode_field(:text, "weight", type: :quantitative, aggregate: :sum)
+  |> Vl.encode(:color, field: "item")
+])
 ```
