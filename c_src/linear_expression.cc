@@ -1,14 +1,11 @@
 #include <cstring>
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
-#include "absl/types/span.h"
 #include "wrappers.h"
 #include "bool_var.h"
 #include "int_var.h"
 #include "utility.h"
 
-using absl::MakeSpan;
-using absl::Span;
 using operations_research::Domain;
 using operations_research::sat::LinearExpr;
 

@@ -52,6 +52,32 @@ mix compile
 mix test
 ```
 
+### Debian
+
+Follow the instructions [here](https://developers.google.com/optimization/install/cpp/linux) and install from the appropriate archive. You will likely want to install them in a reasonable place like `/usr/local/lib` and perhaps link them to a consistent place.
+
+For example:
+
+```sh
+wget https://github.com/google/or-tools/releases/download/v9.2/or-tools_amd64_debian-11_v9.2.9972.tar.gz
+tar xf or-tools_amd64_debian-11_v9.2.9972.tar.gz -C /usr/local/lib
+ln -s /usr/local/lib/or-tools_Debian-11-64bit_v9.2.9972 /usr/local/lib/ortools
+```
+
+### Compiling
+
+Exhort uses NIFs for intrfacing with the Google OR tools. This means that Exhort
+NIFs must be compiled using a C compiler and Make. The `Makefile` contains these
+instructions. It just needs to know where you have installed both Erlang and the
+Google OR Tools. The `Makefile` will use `ERLANG_HOME` for the Erlang
+installation and `ORTOOLS` for the Google OR Tools.
+
+```
+export ERLANG_HOME=/usr/local/lib/erlang
+export ORTOOLS=/usr/local/ortools
+mix compile
+```
+
 ## Getting Started
 
 The easiest way to get started is with the sample Livebook notebooks in the

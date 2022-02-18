@@ -43,27 +43,27 @@ extern "C"
     vector<ERL_NIF_TERM> values;
 
     const char *res_key = "res";
-    ErlNifBinary res = {.data = (unsigned char *)res_key, .size = strlen(res_key)};
+    ErlNifBinary res = {.size = strlen(res_key), .data = (unsigned char *)res_key};
     keys.push_back(enif_make_binary(env, &res));
     values.push_back(term);
 
     const char *status_key = "status";
-    ErlNifBinary status = {.data = (unsigned char *)status_key, .size = strlen(status_key)};
+    ErlNifBinary status = {.size = strlen(status_key), .data = (unsigned char *)status_key};
     keys.push_back(enif_make_binary(env, &status));
     values.push_back(enif_make_int(env, from.status()));
 
     const char *objective_key = "objective";
-    ErlNifBinary objective = {.data = (unsigned char *)objective_key, .size = strlen(objective_key)};
+    ErlNifBinary objective = {.size = strlen(objective_key), .data = (unsigned char *)objective_key};
     keys.push_back(enif_make_binary(env, &objective));
     values.push_back(enif_make_double(env, from.objective_value()));
 
     const char *walltime_key = "walltime";
-    ErlNifBinary walltime = {.data = (unsigned char *)walltime_key, .size = strlen(walltime_key)};
+    ErlNifBinary walltime = {.size = strlen(walltime_key), .data = (unsigned char *)walltime_key};
     keys.push_back(enif_make_binary(env, &walltime));
     values.push_back(enif_make_double(env, from.wall_time()));
 
     const char *usertime_key = "usertime";
-    ErlNifBinary usertime = {.data = (unsigned char *)usertime_key, .size = strlen(usertime_key)};
+    ErlNifBinary usertime = {.size = strlen(usertime_key), .data = (unsigned char *)usertime_key};
     keys.push_back(enif_make_binary(env, &usertime));
     values.push_back(enif_make_double(env, from.user_time()));
 
