@@ -3,13 +3,13 @@ all: nifs
 
 nifs: priv/lib/nif.so
 
-# ifeq ($(ORTOOLS),)
-# 	ORTOOLS=/usr/local
-# endif
+ifeq ($(ORTOOLS),)
+	ORTOOLS=/usr/local
+endif
 
-# ifeq ($(ERLANG_HOME),)
-# 	ERLANG_HOME=/usr/local
-# endif
+ifeq ($(ERLANG_HOME),)
+	ERLANG_HOME=/usr/local
+endif
 
 INCLUDES=-I $(ERLANG_HOME)/usr/include -I $(ORTOOLS)/include
 LIBPATH=-L $(ERLANG_HOME)/usr/lib -L $(ORTOOLS)/lib
