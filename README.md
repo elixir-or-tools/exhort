@@ -74,7 +74,7 @@ installation and `ORTOOLS` for the Google OR Tools.
 
 ```
 export ERLANG_HOME=/usr/local/lib/erlang
-export ORTOOLS=/usr/local/ortools
+export ORTOOLS=/usr/local/lib/ortools
 mix compile
 ```
 
