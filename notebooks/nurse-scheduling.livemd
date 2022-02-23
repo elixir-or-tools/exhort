@@ -5,7 +5,16 @@
 ## Setup
 
 ```elixir
+Mix.install([
+  {:exhort, git: "https://github.com/elixir-or-tools/exhort"},
+  {:vega_lite, "~> 0.1.3"},
+  {:kino, "~> 0.5.0"}
+])
+```
+
+```elixir
 use Exhort.SAT.Builder
+alias VegaLite, as: Vl
 ```
 
 ## Data
@@ -167,4 +176,30 @@ shift_counts =
 
     acc ++ [count]
   end)
+```
+
+```elixir
+values =
+  Enum.map(all_nurses, fn nurse ->
+    Enum.map(all_days, fn day ->
+      Enum.map(all_shifts, fn shift ->
+        nurse_works? = SolverResponse.bool_val(response, "shift_#{nurse}_#{day}_#{shift}")
+        nurse = if nurse_works?, do: nurse, else: nil
+
+        %{
+          day: day,
+          shift: shift,
+          nurse: nurse
+        }
+      end)
+    end)
+  end)
+  |> List.flatten()
+
+Vl.new(width: 400, height: 400)
+|> Vl.data_from_values(values)
+|> Vl.mark(:rect, tooltip: true)
+|> Vl.encode_field(:x, "shift", type: :ordinal)
+|> Vl.encode_field(:y, "day", type: :ordinal)
+|> Vl.encode_field(:color, "nurse", type: :quantitative)
 ```
