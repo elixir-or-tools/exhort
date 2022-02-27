@@ -44,17 +44,27 @@ Next, install the or-tools from Homebrew:
 brew install or-tools
 ```
 
-Then:
+Finally, leverage `asdf` for the required versions of Elixir and Elang:
 
 ```sh
-mix deps.get
-mix compile
-mix test
+asdf install
 ```
+
+Then export the locations of Erlang and the OR Tools:
+
+```sh
+export ERLANG_HOME=$HOME/.asdf/installs/erlang/24.2.1
+export ORTOOLS=/usr/local/lib
+```
+
 
 ### Debian
 
-Follow the instructions [here](https://developers.google.com/optimization/install/cpp/linux) and install from the appropriate archive. You will likely want to install them in a reasonable place like `/usr/local/lib` and perhaps link them to a consistent place.
+Follow the instructions
+[here](https://developers.google.com/optimization/install/cpp/linux) and install
+from the appropriate archive. You will likely want to install them in a
+reasonable place like `/usr/local/lib` and perhaps link them to a consistent
+place.
 
 For example:
 
@@ -64,18 +74,23 @@ tar xf or-tools_amd64_debian-11_v9.2.9972.tar.gz -C /usr/local/lib
 ln -s /usr/local/lib/or-tools_Debian-11-64bit_v9.2.9972 /usr/local/lib/ortools
 ```
 
+Then export the locations of Erlang and the OR Tools:
+
+```sh
+export ERLANG_HOME=/usr/local/lib/erlang
+export ORTOOLS=/usr/local/lib/ortools
+```
+
 ### Compiling
 
 Exhort uses NIFs for intrfacing with the Google OR tools. This means that Exhort
 NIFs must be compiled using a C compiler and Make. The `Makefile` contains these
 instructions. It just needs to know where you have installed both Erlang and the
-Google OR Tools. The `Makefile` will use `ERLANG_HOME` for the Erlang
-installation and `ORTOOLS` for the Google OR Tools.
+Google OR Tools. It will use the environment variables you exported above.
 
-```
-export ERLANG_HOME=/usr/local/lib/erlang
-export ORTOOLS=/usr/local/lib/ortools
+```sh
 mix compile
+mix test
 ```
 
 ## Getting Started

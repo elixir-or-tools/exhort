@@ -3,16 +3,11 @@ all: nifs
 
 nifs: priv/lib/nif.so
 
-ifeq ($(ORTOOLS),)
-	ORTOOLS=/usr/local
-endif
+ORTOOLS ?= /usr/local
+ERLANG_HOME ?= /usr/local
 
-ifeq ($(ERLANG_HOME),)
-	ERLANG_HOME=/usr/local
-endif
-
-INCLUDES=-I $(ERLANG_HOME)/usr/include -I $(ORTOOLS)/include
-LIBPATH=-L $(ERLANG_HOME)/usr/lib -L $(ORTOOLS)/lib
+INCLUDES=-I$(ERLANG_HOME)/usr/include -I$(ORTOOLS)/include
+LIBPATH=-L$(ERLANG_HOME)/usr/lib -L$(ORTOOLS)/lib
 CFLAGS=-std=c++17
 LIBS=-lortools -labsl_raw_hash_set -labsl_base
 SRC=$(wildcard c_src/*.cc)
