@@ -2,7 +2,6 @@
 #include <iostream>
 #include "erl_nif.h"
 #include "ortools/sat/cp_model.h"
-#include "absl/types/span.h"
 #include "wrappers.h"
 #include "linear_expression.h"
 #include "bool_var.h"
@@ -1051,8 +1050,7 @@ extern "C"
     model.Add(NewFeasibleSolutionObserver([&](const CpSolverResponse &r)
                                           {
                                             ERL_NIF_TERM term = make_cp_solver_response(env, r);
-                                            enif_send(env, &pid, NULL, term);
-                                          }));
+                                            enif_send(env, &pid, NULL, term); }));
 
     CpSolverResponse response = SolveCpModel(builder_wrapper->p->Build(), &model);
     return make_cp_solver_response(env, response);
