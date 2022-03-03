@@ -282,7 +282,10 @@ defmodule Exhort.SAT.LinearExpression do
   @doc """
   Create a linear expression as the product of `val1` and `val2`.
   """
-  @spec prod(IntVar.t() | integer() | list(), IntVar.t() | integer() | list()) ::
+  @spec prod(
+          IntVar.t() | integer() | list() | atom() | String.t(),
+          IntVar.t() | integer() | list() | atom() | String.t()
+        ) ::
           LinearExpression.t()
   def prod(val1, val2) when is_list(val1) and is_list(val2) do
     Enum.zip(val1, val2)
