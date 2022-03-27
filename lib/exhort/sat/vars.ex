@@ -1,8 +1,8 @@
 defmodule Exhort.SAT.Vars do
-  @moduledoc """
-  Hold the defined varaibles and raise an error if an undefined variable is
-  referenced.
-  """
+  @moduledoc false
+
+  # Hold the defined varaibles and raise an error if an undefined variable is
+  # referenced.
 
   alias __MODULE__
 

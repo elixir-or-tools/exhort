@@ -1,7 +1,7 @@
 defmodule Exhort.SAT.DSL do
-  @moduledoc """
-  An expression-based DSL for specifying variables and constraints.
-  """
+  @moduledoc false
+
+  # An expression-based DSL for specifying variables and constraints.
 
   alias Exhort.SAT.LinearExpression
 

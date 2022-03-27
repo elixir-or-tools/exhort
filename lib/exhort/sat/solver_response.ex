@@ -2,7 +2,8 @@ defmodule Exhort.SAT.SolverResponse do
   @moduledoc """
   A response from solving a model.
 
-  Provides functions for retrieving variable values from the response.
+  Provides functions for retrieving variable values from the response. The set
+  of valid variables are those defined in the model that was solved.
   """
 
   @type t :: %__MODULE__{}
@@ -38,13 +39,12 @@ defmodule Exhort.SAT.SolverResponse do
     }
   end
 
+  @doc """
+  A map of the response metadata, `:status`, `:objective`, `:walltime`,
+  `:usertime`.
+  """
   def stats(response) do
     Map.take(response, [:status, :objective, :walltime, :usertime])
-  end
-
-  def status_from_int(int) do
-    %{0 => :unknown, 1 => :model_invalid, 2 => :feasible, 3 => :infeasible, 4 => :optimal}
-    |> Map.get(int)
   end
 
   @doc """
@@ -73,6 +73,11 @@ defmodule Exhort.SAT.SolverResponse do
   @spec bool_val(SolverResponse.t(), literal :: String.t() | atom() | BoolVar.t()) :: boolean()
   def bool_val(response, var) do
     get_bool_val(response, var)
+  end
+
+  defp status_from_int(int) do
+    %{0 => :unknown, 1 => :model_invalid, 2 => :feasible, 3 => :infeasible, 4 => :optimal}
+    |> Map.get(int)
   end
 
   @spec get_int_val(SolverResponse.t(), var :: atom() | String.t() | IntVar.t()) ::

@@ -1,16 +1,12 @@
 defmodule Exhort.SAT.LinearExpression do
-  @moduledoc """
-  An expression in terms of variables and operators, constraining the overall
-  model.
+  @moduledoc false
 
-  Expressions should be defined through `Exhort.SAT.Constraint` or
-  `Exhort.SAT.Builder`. Alternatively, a new expression may be created using the
-  `Exhort.SAT.LinearExpression.new/1` macro.
-
-  The approach here is to transform values into `LinearExpression`s and then
-  apply the operator (e.g., `:sum`) to the expressions. This allows for fewer
-  NIF functions do the combination of the number of arguments.
-  """
+  # An expression in terms of variables and operators, constraining the overall
+  # model.
+  #
+  # The approach here is to transform values into `LinearExpression`s and then
+  # apply the operator (e.g., `:sum`) to the expressions. This allows for fewer
+  # NIF functions do the combination of the number of arguments.
 
   @type t :: %__MODULE__{}
   defstruct res: nil, expr: []
@@ -38,8 +34,8 @@ defmodule Exhort.SAT.LinearExpression do
       ) do
     var1 = Vars.get(vars, var1)
     bool_res = Nif.bool_not_nif(var1.res)
-    expr_nif = Nif.expr_from_bool_var_nif(bool_res)
-    %LinearExpression{expr | res: expr_nif}
+    expr_res = Nif.expr_from_bool_var_nif(bool_res)
+    %LinearExpression{expr | res: expr_res}
   end
 
   def resolve(
@@ -51,8 +47,8 @@ defmodule Exhort.SAT.LinearExpression do
       ) do
     var1 = Vars.get(vars, literal1)
     bool_res = Nif.bool_not_nif(var1.res)
-    expr_nif = Nif.expr_from_bool_var_nif(bool_res)
-    %LinearExpression{expr | res: expr_nif}
+    expr_res = Nif.expr_from_bool_var_nif(bool_res)
+    %LinearExpression{expr | res: expr_res}
   end
 
   def resolve(

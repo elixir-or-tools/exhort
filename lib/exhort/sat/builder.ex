@@ -210,23 +210,7 @@ defmodule Exhort.SAT.Builder do
     end
   end
 
-  @doc """
-  Define a constraint on the model using variables.
-
-  - `constraint` is specified as an atom. See `Exhort.SAT.Constraint`.
-  - `lhs` and `rhs` may each either be an atom, string, `LinearExpression`, or
-    an existing `BoolVar` or `IntVar`.
-  - `opts` may specify a restriction on the constraint:
-      - `if: BoolVar` specifies that a constraint only takes effect if `BoolVar`
-        is true
-      - `unless: BoolVar` specifies that a constraint only takes effect if
-        `BoolVar` is false
-
-  - `:==` - `lhs == rhs`
-  - `:abs==` - `lhs == abs(rhs)`
-  - `:"all!="` - Require each element the provide list has a different value
-    from all the rest
-  """
+  @doc false
   @spec constrain(
           builder :: Builder.t(),
           lhs :: atom() | String.t() | BoolVar.t() | IntVar.t() | LinearExpression.t(),

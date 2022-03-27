@@ -16,18 +16,13 @@ defmodule Exhort.SAT.BoolVar do
   1 and 0, respectively.
 
   - `name` - The variable name that may be referenced in other expressions.
-  - `domain` - The upper and lower bounds of the variable defined as a tuple,
-    `{lower_bound, upper_bound}`.
   """
   @spec new(name :: String.t()) :: BoolVar.t()
   def new(name) do
     %BoolVar{name: name}
   end
 
-  @doc """
-  Resolve to a boolean variable for cases in which a boolean variable is
-  required.
-  """
+  @doc false
   @spec resolve(var :: atom() | String.t() | BoolVar.t(), map()) :: BoolVar.t()
   def resolve(
         %LinearExpression{res: nil, expr: {:not, %BoolVar{res: nil} = var}},

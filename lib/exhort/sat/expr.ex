@@ -72,7 +72,7 @@ defmodule Exhort.SAT.Expr do
   @doc """
   Define an interval variable. It must later be added to the model.
 
-  See `Exhort.SAT.Builder.def_interval_var/3`.
+  See `Exhort.SAT.Builder.def_interval_var/6`.
 
   - `name` is the variable name
   - `start` is the start of the interval
@@ -124,6 +124,9 @@ defmodule Exhort.SAT.Expr do
   @spec all_different(list(), Keyword.t()) :: Constraint.t()
   defdelegate all_different(list, opts \\ []), to: Constraint
 
+  @doc """
+  Create logical AND constraint on the list of booleans.
+  """
   defmacro bool_and(list) when is_list(list) do
     expr_list = Enum.map(list, &DSL.transform_expression(&1))
 
@@ -132,6 +135,9 @@ defmodule Exhort.SAT.Expr do
     end
   end
 
+  @doc """
+  Create a constraint that requires one of the booleans in the list to be true.
+  """
   defmacro bool_or(list) when is_list(list) do
     expr_list = Enum.map(list, &DSL.transform_expression(&1))
 
