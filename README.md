@@ -111,6 +111,14 @@ Exhort API and expression language. There is more about the Exhort API and
 expression language below, but the notebooks and tests are probably a good place
 to start.
 
+### As a dependency of a project
+
+Add Exhort as a dependency to your project in the `mix.exs`:
+
+```elixir
+  {:exhort, "~> 0.1.0"}
+```
+
 ## API
 
 Exhort is in the early stages of development. As such, we are investigating a
@@ -211,7 +219,6 @@ These may then be added to the builder as a list:
     |> Builder.add(shift_nurses_per_period)
 ...
 ```
-
 
 ### Variables
 
