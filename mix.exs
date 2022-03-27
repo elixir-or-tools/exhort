@@ -8,6 +8,7 @@ defmodule Exhort.MixProject do
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      description: description(),
       package: package(),
       compilers: [:elixir_make] ++ Mix.compilers(),
       make_args: ["--quiet"],
@@ -26,14 +27,23 @@ defmodule Exhort.MixProject do
   defp deps do
     [
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:elixir_make, "~> 0.4", runtime: false}
+      {:elixir_make, "~> 0.4", runtime: false},
+      {:ex_doc, "~> 0.28", only: :dev, runtime: false}
     ]
+  end
+
+  defp description() do
+    """
+    An idiomatic Elixir library for operations research optimization.
+
+    Exhort provides an interface to the Google OR Tools.
+    """
   end
 
   defp package do
     [
       name: "exhort",
-      description: "An idiomatic Elixir library for operations research optmization",
+      organization: "elixir-or-tools",
       files: [
         "lib",
         "mix.exs",
@@ -45,7 +55,11 @@ defmodule Exhort.MixProject do
       ],
       maintainers: ["objectuser", "cameron-kurth"],
       licenses: ["Apache-2.0"],
-      links: %{"GitHub" => "https://github.com/elixir-or-tools/exhort"}
+      links: %{
+        "GitHub" => "https://github.com/elixir-or-tools/exhort",
+        "Google OR Tools" => "https://developers.google.com/optimization/"
+      },
+      source_url: "https://github.com/elixir-or-tools/exhort"
     ]
   end
 end
