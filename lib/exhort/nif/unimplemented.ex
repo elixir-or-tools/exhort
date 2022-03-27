@@ -1,8 +1,10 @@
 defmodule Exhort.NIF.Unimplemented do
+  @moduledoc false
   @callback on_unimplemented() :: reference()
 end
 
 defmodule Exhort.NIF.RaiseUnimplemented do
+  @moduledoc false
   @behaviour Exhort.NIF.Unimplemented
 
   @impl true
@@ -12,6 +14,7 @@ defmodule Exhort.NIF.RaiseUnimplemented do
 end
 
 defmodule Exhort.NIF.LogUnimplemented do
+  @moduledoc false
   @behaviour Exhort.NIF.Unimplemented
 
   require Logger

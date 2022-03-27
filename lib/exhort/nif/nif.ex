@@ -1,9 +1,10 @@
 defmodule Exhort.NIF.Nif do
-  @moduledoc """
-  Interface to all the NIF implementations.
+  @moduledoc false
 
-  What's the best way to add `@spec`s to these functions?
-  """
+  # Interface to all the NIF implementations.
+  #
+  # What's the best way to add `@spec`s to these functions?
+
   @on_load :load_nifs
 
   require Logger

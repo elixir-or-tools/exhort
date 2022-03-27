@@ -10,6 +10,8 @@ defmodule Exhort.MixProject do
       deps: deps(),
       description: description(),
       package: package(),
+      name: "Exhort",
+      docs: docs(),
       compilers: [:elixir_make] ++ Mix.compilers(),
       make_args: ["--quiet"],
       make_clean: ["clean"]
@@ -38,6 +40,28 @@ defmodule Exhort.MixProject do
 
     Exhort provides an interface to the Google OR Tools.
     """
+  end
+
+  defp docs do
+    [
+      main: "Exhort",
+      groups_for_modules: [
+        # Exhort,
+        # Exhort.SAT.Builder,
+        # Exhort.SAT.Expr,
+        # Exhort.SAT.Model,
+        # Exhort.SAT.SolverResponse,
+      ],
+      extras: [
+        "notebooks/binpacking.livemd",
+        "notebooks/nurse-scheduling.livemd",
+        "notebooks/channeling.livemd",
+        "notebooks/rabbits-and-pheasants.livemd",
+        "notebooks/minimal-job-shop.livemd",
+        "notebooks/ranking-sample-sat.livemd",
+        "notebooks/multiple-knapsack.livemd"
+      ]
+    ]
   end
 
   defp package do

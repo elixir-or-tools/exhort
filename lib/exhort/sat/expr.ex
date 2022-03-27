@@ -72,7 +72,7 @@ defmodule Exhort.SAT.Expr do
   @doc """
   Define an interval variable. It must later be added to the model.
 
-  See `Exhort.SAT.Builder.def_interval_var/3`.
+  See `Exhort.SAT.Builder.def_interval_var/6`.
 
   - `name` is the variable name
   - `start` is the start of the interval

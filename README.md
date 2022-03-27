@@ -4,7 +4,7 @@ Beseech the maths to answer.
 
 ## Overview
 
-Exhort is an Elixir interface to the [Google OR
+Exhort is an idomatic Elixir interface to the [Google OR
 Tools](https://developers.google.com/optimization).
 
 Currently, there are C++ (native) Python, Java and C# interfaces to the Google
