@@ -111,6 +111,7 @@ extern "C"
       {
         return enif_make_badarg(env);
       }
+
       linear_expr += *expr->p;
     }
 

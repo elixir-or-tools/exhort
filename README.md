@@ -10,7 +10,7 @@ Tools](https://developers.google.com/optimization).
 Currently, there are C++ (native) Python, Java and C# interfaces to the Google
 OR tools.
 
-Exhort is similar to the non-native interfaces to the tooling, but uses
+Exhort is similar to the non-native interfaces to the tooling, but Exhort uses
 [NIFs](https://www.erlang.org/doc/tutorial/nif.html) instead of
 [SWIG](http://www.swig.org/) to interface with the native libarary.
 
@@ -24,39 +24,31 @@ the target system.
 
 ### MacOS
 
-On MacOS, ensure the latest command line tools are installed. Currently, 13.2 is
-the latest. You can check with:
+On MacOS, ensure the [latest command line
+tools](https://developer.apple.com/download/all/) are installed.
 
 ```sh
 pkgutil --pkg-info=com.apple.pkg.CLTools_Executables
 ```
 
-https://developer.apple.com/download/all/
-
-If there's a problem updating your tools, you might have to do it manually.
-
-1. Remove existing files with `sudo rm -rf /Library/Developer/CommandLineTools`
-2. Install the package above.
-
-Next, install the or-tools from Homebrew:
+Next, install the `or-tools` package from Homebrew:
 
 ```sh
 brew install or-tools
 ```
 
-Finally, leverage `asdf` for the required versions of Elixir and Elang:
+Then leverage `asdf` for the required versions of Elixir and Elang:
 
 ```sh
 asdf install
 ```
 
-Then export the locations of Erlang and the OR Tools:
+Finally, export the locations of Erlang and the OR Tools:
 
 ```sh
 export ERLANG_HOME=$HOME/.asdf/installs/erlang/24.2.1
-export ORTOOLS=/usr/local/lib
+export ORTOOLS=/usr/local
 ```
-
 
 ### Debian
 
@@ -64,7 +56,7 @@ Follow the instructions
 [here](https://developers.google.com/optimization/install/cpp/linux) and install
 from the appropriate archive. You will likely want to install them in a
 reasonable place like `/usr/local/lib` and perhaps link them to a consistent
-place.
+path.
 
 For example:
 
@@ -83,10 +75,11 @@ export ORTOOLS=/usr/local/lib/ortools
 
 ### Compiling
 
-Exhort uses NIFs for intrfacing with the Google OR tools. This means that Exhort
-NIFs must be compiled using a C compiler and Make. The `Makefile` contains these
-instructions. It just needs to know where you have installed both Erlang and the
-Google OR Tools. It will use the environment variables you exported above.
+Exhort uses NIFs for interfacing with the Google OR tools. This means that
+Exhort NIFs must be compiled using a C compiler and Make. The `Makefile`
+contains these instructions. It just needs to know where you have installed both
+Erlang and the Google OR Tools. It will use the environment variables you
+exported above.
 
 ```sh
 mix compile
@@ -109,11 +102,14 @@ livebook server --name livebook@127.0.0.1
 
 1. Use the link that is written to the console and browse the samples.
 2. Open a sample in the `notebooks` directory
-3. Run the notebook in the project by choosing the `Mix standalone` option in the
-   left side of Livebook under "Runtime setteings"
+3. Run the notebook in the project by choosing the `Mix standalone` option in
+   the left side of Livebook under "Runtime setteings"
 
-That should provide a starting place for exploring the Exhort API and expression
-language.
+The notebooks are mostly implementations of some of the samples that come with
+the Google OR Tools. That should provide a starting place for exploring the
+Exhort API and expression language. There is more about the Exhort API and
+expression language below, but the notebooks and tests are probably a good place
+to start.
 
 ## API
 
@@ -121,14 +117,18 @@ Exhort is in the early stages of development. As such, we are investigating a
 varity of API approaches. We may end up with more than one (a la Ecto), but in
 the short term will likely focus on a single approach.
 
+The API is centered around the `Builder` and `Expr` modules. Those modules
+leverage Elixir macros to provide a DSL "expression language" for Exhort.
+
 ### Builder
 
 Building a model starts off with the `Builder`.
 
 `Builder` has functions for defining variables, specifying constraints and
-creating the model using the `build` function.
+creating a `%Model{}` using the `build` function.
 
-The result of the `build` function is a `Model`.
+By specifying `use Exhort.SAT.Builder`, all of the relevant modules will be
+aliased and the Exhort macros will be expanded.
 
 ```elixir
   use Exhort.SAT.Builder
@@ -163,6 +163,8 @@ The result of the `build` function is a `Model`.
     SolverResponse.int_val(response, "y") |> IO.inspect(label: "y: ")
     SolverResponse.bool_val(response, "b") |> IO.inspect(label: "b: ")
 ```
+
+See below for more about the expression language used in Exhort.
 
 ### Expr
 
@@ -213,10 +215,10 @@ These may then be added to the builder as a list:
 
 ### Variables
 
-Model variables are symbolic, represented as strings or atoms, and so don't
-interfere to the surrounding Elixir context. This allows the variables to be
-consistently referenced through a builder pipeline, for example, without having
-to capture an intermediate result.
+Model variables in the expression language are symbolic, represented as strings
+or atoms, and so don't interfere to the surrounding Elixir context. This allows
+the variables to be consistently referenced through a builder pipeline, for
+example, without having to capture an intermediate result.
 
 Elixir variables may be used "as is" in expressions, allowing variables to be
 generated from enumerable collections.
@@ -228,24 +230,45 @@ variable:
 "x" < y + 3
 ```
 
-Building variables is done through normal Elixir expressions:
+Variables may be defined in a few ways. It's often convenient to just focus on
+the `Expr` and `Builder` modules, which each have functions like `def_int_var`
+and `def_bool_var`.
 
 ```elixir
-    builder
-    |> Builder.reduce(all_bins, fn bin, builder ->
-      Builder.def_bool_var(builder, "slack_#{bin}")
+    all_bins
+    |> Enum.map(fn bin ->
+      Expr.def_bool_var("slack_#{bin}")
     end)
 ```
 
-Note the use of `Builder.reduce/3` here. That function delegates to
-`Enum.reduce`, but uses the `%Builder{}` as its first argument, making it
-convenient for pipelining.
+However, `BoolVar.new/1` and `IntVar.new/1` may also be used:
+
+```elixir
+    all_bins
+    |> Enum.map(fn bin ->
+      BoolVar.new("slack_#{bin}")
+    end)
+```
 
 Of course, such names are still usable in expressions:
 
 ```elixir
-    builder
-    |> Builder.constrain("slack_#{bin}" <= bin_total)
+    Expr.new("slack_#{bin}" <= bin_total)
+```
+
+Note that any variables or expressions created outside of the `Builder` still
+need to be added to a `%Builder{}` struct for them to be part of the model
+resulting from `build/1`. There's no magic here, these are still Elixir
+immutable data structures.
+
+```elixir
+    variables = ...
+    expressions = ...
+
+    Builder.new()
+    |> Builder.add(variables)
+    |> Builder.add(expressions)
+    |> Builder.build()
 ```
 
 ### Expressions
@@ -256,19 +279,18 @@ may also use comparison operators `<`, `<=`, `==`, `>=`, `>`, the `sum` function
 and even the `for` comprehension.
 
 ```elixir
-    builder
-    |> Builder.reduce(all_bins, fn bin, builder ->
-      expr = Enum.map(items, &{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
+    all_bins
+    |> Enum.map(fn bin ->
+      vars = Enum.map(items, &{elem(&1, 0), "x_#{elem(&1, 0)}_#{bin}"})
       load_bin = "load_#{bin}"
 
-      builder
-      |> Builder.constrain(sum(for {item, x} <- expr, do: item * x) == load_bin)
+      Expr.constrain(sum(for {item, x} <- vars, do: item * x) == load_bin)
     end)
 ```
 
 ### Model
 
-The model is the result of finalizing the builder, created throught the
+The model is the result of finalizing the builder, created through the
 `Builder.build/1` function.
 
 The model may then be solved with `Model.solve/1` or `Model.solve/2`.
@@ -280,6 +302,9 @@ solutions from the solver.
 
 Exhort relies on the underlying native C++ implementation of the Google OR
 Tools.
+
+Exhort interacts with the Google OR Tools library when the model is built using
+`Builder.build/1` and when solved using `Model.solve/1` or `Model.solve/2`.
 
 References to the native objects are returned via NIF resources to the Elixir
 runtime as `%Reference{}` values. These are often stored in corresponding Exhort

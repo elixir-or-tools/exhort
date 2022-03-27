@@ -320,15 +320,6 @@ defmodule Exhort.SAT.Builder do
   end
 
   @doc """
-  Provide reduction that accepts the builder as the first argument and the
-  enumerable as the second, faciliating pipelines with the `Builder`.
-  """
-  @spec reduce(Builder.t(), Enumerable.t(), function()) :: Builder.t()
-  def reduce(builder, items, f) do
-    Enum.reduce(items, builder, f)
-  end
-
-  @doc """
   Build the model. Once the model is built it may be solved.
 
   This function interacts with the underlying native model.
