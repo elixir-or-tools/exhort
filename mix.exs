@@ -73,7 +73,6 @@ defmodule Exhort.MixProject do
   defp package do
     [
       name: "exhort",
-      organization: "elixir-or-tools",
       files: [
         "lib",
         "mix.exs",
