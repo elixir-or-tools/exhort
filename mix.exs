@@ -79,8 +79,7 @@ defmodule Exhort.MixProject do
         "mix.exs",
         "README.md",
         "LICENSE.md",
-        "c_src/*.[cc]",
-        "c_src/*.h",
+        "c_src",
         "Makefile"
       ],
       maintainers: ["objectuser", "cameron-kurth"],
