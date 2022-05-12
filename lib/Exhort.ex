@@ -24,7 +24,7 @@ defmodule Exhort do
     a function that receives intermediate results in the solution.
 
   * `Exhort.SAT.SolverResponse` - A model solution. The
-    `%Exhort.SAT.SolverResponse{}` struct containts meta-level information of
+    `%Exhort.SAT.SolverResponse{}` struct contains meta-level information of
     the solution. The module has functions for retriving the values of variables
     defined in the model.
 
@@ -49,7 +49,7 @@ defmodule Exhort do
 
   ### Builder
 
-  Building a model is done `Exhort.SAT.Builder`.
+  Building a model is done using `Exhort.SAT.Builder`.
 
   `Exhort.SAT.Builder` has functions for defining variables, specifying
   constraints and creating a `%Exhort.SAT.Model{}` using the `build` function.

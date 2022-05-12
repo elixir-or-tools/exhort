@@ -15,6 +15,8 @@ defmodule Exhort.SAT.SolutonListener do
 
   alias Exhort.SAT.SolverResponse
 
+  require Logger
+
   def start_link(builder, callback) do
     GenServer.start_link(__MODULE__, {builder, callback})
   end
@@ -24,11 +26,13 @@ defmodule Exhort.SAT.SolutonListener do
   """
   @spec stop(pid()) :: :ok
   def stop(pid) do
+    Logger.info("module=#{__MODULE__} event#stop message=Solution Listener Stopping...")
     GenServer.stop(pid)
   end
 
   @impl true
   def init({builder, callback}) do
+    Logger.info("module=#{__MODULE__} event#init message=Solution Listener Starting...")
     {:ok, {builder, callback, nil}}
   end
 
@@ -50,7 +54,9 @@ defmodule Exhort.SAT.SolutonListener do
   """
   @impl true
   def handle_info(response, {builder, callback, acc}) do
-    acc = callback.(SolverResponse.build(response, builder), acc)
+    solver_resp = SolverResponse.build(response, builder)
+    acc = callback.(solver_resp, acc)
+    Logger.info("module=#{__MODULE__} event#handle_info message=Building callback stats=#{inspect SolverResponse.stats(solver_resp)}")
     {:noreply, {builder, callback, acc}}
   end
 end
