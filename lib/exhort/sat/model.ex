@@ -11,6 +11,8 @@ defmodule Exhort.SAT.Model do
   alias Exhort.SAT.SolverResponse
   alias Exhort.SAT.SolutonListener
 
+  require Logger
+
   @doc """
   Solve the model, returning the solution.
 
@@ -18,6 +20,7 @@ defmodule Exhort.SAT.Model do
   """
   @spec solve(Model.t()) :: SolverResponse.t()
   def solve(%Model{res: res} = model) when not is_nil(res) do
+    Logger.info("module=#{__MODULE__} event#solve/1 message=Triggered Model Solve")
     SolverResponse.build(Nif.solve_nif(model.res), model)
   end
 
@@ -30,6 +33,8 @@ defmodule Exhort.SAT.Model do
   """
   @spec solve(Model.t(), (SolverResponse.t(), any() -> any())) :: {SolverResponse.t(), any()}
   def solve(%Model{res: res} = model, callback) when not is_nil(res) do
+    Logger.info("module=#{__MODULE__} event#solve/2 message=Triggered Model Solve")
+
     {:ok, pid} = SolutonListener.start_link(model, callback)
 
     response = SolverResponse.build(Nif.solve_with_callback_nif(model.res, pid), model)

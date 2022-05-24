@@ -43,6 +43,7 @@ defmodule Exhort.SAT.SolverResponse do
   A map of the response metadata, `:status`, `:objective`, `:walltime`,
   `:usertime`.
   """
+  @spec stats(SolverResponse.t()) :: map()
   def stats(response) do
     Map.take(response, [:status, :objective, :walltime, :usertime])
   end

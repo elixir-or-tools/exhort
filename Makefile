@@ -9,7 +9,7 @@ ERLANG_HOME ?= /usr/local
 INCLUDES=-I$(ERLANG_HOME)/usr/include -I$(ORTOOLS)/include
 LIBPATH=-L$(ERLANG_HOME)/usr/lib -L$(ORTOOLS)/lib
 CFLAGS=-std=c++17
-LIBS=-lortools -labsl_raw_hash_set -labsl_base
+LIBS=-lortools
 SRC=$(wildcard c_src/*.cc)
 
 UNAME_S := $(shell uname -s)

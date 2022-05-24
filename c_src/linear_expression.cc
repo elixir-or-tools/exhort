@@ -202,7 +202,7 @@ extern "C"
     if (linear_expr_wrapper == NULL)
       return enif_make_badarg(env);
 
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::ScalProd({*var1->p}, {int2}));
+    linear_expr_wrapper->p = new LinearExpr(LinearExpr::WeightedSum({*var1->p}, {int2}));
     term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 
@@ -229,7 +229,7 @@ extern "C"
     if (linear_expr_wrapper == NULL)
       return enif_make_badarg(env);
 
-    linear_expr_wrapper->p = new LinearExpr(LinearExpr::ScalProd({*var1->p}, {int2}));
+    linear_expr_wrapper->p = new LinearExpr(LinearExpr::WeightedSum({*var1->p}, {int2}));
     term = enif_make_resource(env, linear_expr_wrapper);
     enif_release_resource(linear_expr_wrapper);
 
