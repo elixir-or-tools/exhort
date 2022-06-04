@@ -68,8 +68,8 @@ ln -s /usr/local/lib/or-tools_Debian-11-64bit_v9.2.9972 /usr/local/lib/ortools
 Then export the locations of Erlang and the OR Tools:
 
 ```sh
-export ERLANG_HOME=/usr/local/lib/erlang
-export ORTOOLS=/usr/local/lib/ortools
+export ERLANG_HOME=$HOME/.asdf/installs/erlang/24.2.1
+export ORTOOLS=$(brew --prefix)/lib/ortools
 ```
 
 ### Compiling
@@ -322,3 +322,11 @@ structs under the `res` key.
 
 The native code is compiled to a single `nif.so` library and loaded via the
 `Exhort.NIF.Nif` module.
+
+# Contributing
+
+1. Use clear descriptions in your commit message, both the header and the body.
+   Describe both what you did and why you did it.
+1. Make sure the tests run with your changes. Adding new tests for new
+   functionality is a good idea.
+1. Request reviews from the code owners.
