@@ -182,6 +182,6 @@ defmodule Exhort.NIF.Nif do
   end
 
   defp unimplemented() do
-    Application.get_env(:exhort, :unimplemented)
+    Application.get_env(:exhort, :unimplemented, Exhort.NIF.RaiseUnimplemented)
   end
 end

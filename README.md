@@ -68,8 +68,8 @@ ln -s /usr/local/lib/or-tools_Debian-11-64bit_v9.2.9972 /usr/local/lib/ortools
 Then export the locations of Erlang and the OR Tools:
 
 ```sh
-export ERLANG_HOME=/usr/local/lib/erlang
-export ORTOOLS=/usr/local/lib/ortools
+export ERLANG_HOME=$HOME/.asdf/installs/erlang/24.2.1
+export ORTOOLS=$(brew --prefix)/lib/ortools
 ```
 
 ### Compiling
@@ -94,15 +94,19 @@ Start [Livebook](https://livebook.dev/) and open a notebook (use whatever method
 you like to start Livebook).
 
 ```sh
-mix escript.install hex livebook
+# export your `ERLANG_HOME` and `ORTOOLS` variables here
+$ mix escript.install hex livebook
 # if installed in `asdf` use `asdf reshim`
-livebook server --name livebook@127.0.0.1
+$ pwd
+.../exhort
+$ livebook server --name livebook@127.0.0.1 --home .
 ```
 
-1. Use the link that is written to the console and browse the samples.
-2. Open a sample in the `notebooks` directory
-3. Run the notebook in the project by choosing the `Mix standalone` option in
-   the left side of Livebook under "Runtime setteings"
+1. Use the link that is written to the console and browse the `notebooks`
+   directory.
+2. Open a sample, maybe `multiple-knapsack.livemd` or `nurse-scheduling.livemd`,
+   since those have some visualizations.
+3. Run the cells in the notebook and inspect the results.
 
 The notebooks are mostly implementations of some of the samples that come with
 the Google OR Tools. That should provide a starting place for exploring the
@@ -164,7 +168,7 @@ aliased and the Exhort macros will be expanded.
     response |> IO.inspect(label: "response: ")
 
     # :optimal
-    response.status |> IO.inspect(label: "satus: ")
+    response.status |> IO.inspect(label: "status: ")
     # 10, 0, true
     SolverResponse.int_val(response, "x") |> IO.inspect(label: "x: ")
     SolverResponse.int_val(response, "y") |> IO.inspect(label: "y: ")
@@ -318,3 +322,11 @@ structs under the `res` key.
 
 The native code is compiled to a single `nif.so` library and loaded via the
 `Exhort.NIF.Nif` module.
+
+# Contributing
+
+1. Use clear descriptions in your commit message, both the header and the body.
+   Describe both what you did and why you did it.
+1. Make sure the tests run with your changes. Adding new tests for new
+   functionality is a good idea.
+1. Request reviews from the code owners.
