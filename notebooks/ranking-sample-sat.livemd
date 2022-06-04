@@ -7,6 +7,12 @@
 Code sample to demonstrates how to rank intervals.
 
 ```elixir
+Mix.install([
+  {:exhort, git: "https://github.com/elixir-or-tools/exhort"}
+])
+```
+
+```elixir
 use Exhort.SAT.Builder
 ```
 

@@ -94,15 +94,17 @@ Start [Livebook](https://livebook.dev/) and open a notebook (use whatever method
 you like to start Livebook).
 
 ```sh
+# export your `ERLANG_HOME` and `ORTOOLS` variables here
 mix escript.install hex livebook
 # if installed in `asdf` use `asdf reshim`
 livebook server --name livebook@127.0.0.1
 ```
 
-1. Use the link that is written to the console and browse the samples.
-2. Open a sample in the `notebooks` directory
-3. Run the notebook in the project by choosing the `Mix standalone` option in
-   the left side of Livebook under "Runtime setteings"
+1. Use the link that is written to the console and browse the `notebooks`
+   directory.
+2. Open a sample, maybe `multiple-knapsack.livemd` or `nurse-scheduling.livemd`,
+   since those have some visualizations.
+3. Run the cells in the notebook and inspect the results.
 
 The notebooks are mostly implementations of some of the samples that come with
 the Google OR Tools. That should provide a starting place for exploring the
@@ -164,7 +166,7 @@ aliased and the Exhort macros will be expanded.
     response |> IO.inspect(label: "response: ")
 
     # :optimal
-    response.status |> IO.inspect(label: "satus: ")
+    response.status |> IO.inspect(label: "status: ")
     # 10, 0, true
     SolverResponse.int_val(response, "x") |> IO.inspect(label: "x: ")
     SolverResponse.int_val(response, "y") |> IO.inspect(label: "y: ")
