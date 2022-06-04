@@ -95,9 +95,11 @@ you like to start Livebook).
 
 ```sh
 # export your `ERLANG_HOME` and `ORTOOLS` variables here
-mix escript.install hex livebook
+$ mix escript.install hex livebook
 # if installed in `asdf` use `asdf reshim`
-livebook server --name livebook@127.0.0.1
+$ pwd
+.../exhort
+$ livebook server --name livebook@127.0.0.1 --home .
 ```
 
 1. Use the link that is written to the console and browse the `notebooks`
