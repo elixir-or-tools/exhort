@@ -43,11 +43,12 @@ Then leverage `asdf` for the required versions of Elixir and Elang:
 asdf install
 ```
 
-Finally, export the locations of Erlang and the OR Tools (may need tweaking if on M1):
+Finally, export the locations of Erlang and the OR Tools for your specific
+system:
 
 ```sh
 export ERLANG_HOME=$HOME/.asdf/installs/erlang/24.2.1
-export ORTOOLS=/usr/local
+export ORTOOLS=$(brew --prefix)/lib/ortools
 ```
 ### Debian
 
@@ -68,8 +69,8 @@ ln -s /usr/local/lib/or-tools_Debian-11-64bit_v9.2.9972 /usr/local/lib/ortools
 Then export the locations of Erlang and the OR Tools:
 
 ```sh
-export ERLANG_HOME=$HOME/.asdf/installs/erlang/24.2.1
-export ORTOOLS=$(brew --prefix)/lib/ortools
+export ERLANG_HOME=/usr/local/lib/erlang
+export ORTOOLS=/usr/local/lib/ortools
 ```
 
 ### Compiling
